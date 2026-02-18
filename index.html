@@ -1,0 +1,2617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financeiro Pro</title>
+    <link rel="manifest" href="data:application/manifest+json,{'name':'Dashboard','display':'standalone'}">
+    <meta name="theme-color" content="#1e3a8a">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 0;
+            min-height: 100vh;
+            transition: background 0.5s ease;
+        }
+
+        body.banco-todos {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body.banco-nubank {
+            background: linear-gradient(135deg, #8b10ff 0%, #5a008f 100%);
+            box-shadow: 0 0 100px rgba(139, 16, 255, 0.3) inset;
+        }
+
+        body.banco-itau {
+            background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+            box-shadow: 0 0 100px rgba(255, 140, 0, 0.3) inset;
+        }
+
+        body.banco-btg {
+            background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%);
+            box-shadow: 0 0 100px rgba(255, 215, 0, 0.2) inset;
+        }
+
+        body.banco-daytrade {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+            box-shadow: 0 0 100px rgba(59, 130, 246, 0.3) inset;
+        }
+
+        .dashboard-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            transition: all 0.5s ease;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        .logo-icon {
+            font-size: 4em;
+            transition: transform 0.3s ease;
+        }
+
+        .logo-icon:hover {
+            transform: scale(1.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .bank-selector {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+
+        .bank-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .bank-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .bank-btn.active {
+            transform: scale(1.05);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+
+        .bank-btn.todos {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .bank-btn.nubank {
+            background: linear-gradient(135deg, #8b10ff 0%, #5a008f 100%);
+            color: white;
+        }
+
+        .bank-btn.itau {
+            background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+            color: white;
+        }
+
+        .bank-btn.btg {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: #ffd700;
+            border: 2px solid #ffd700;
+        }
+
+        .bank-btn.daytrade {
+            background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+            color: white;
+        }
+
+        .month-selector {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .month-selector select {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .view-content {
+            display: none;
+        }
+
+        .view-content.active {
+            display: block;
+        }
+
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card-value {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .card-positive {
+            color: #10b981;
+        }
+
+        .card-negative {
+            color: #ef4444;
+        }
+
+        .card-neutral {
+            color: #667eea;
+        }
+
+        .card-warning {
+            color: #f59e0b;
+        }
+
+        .data-input {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .data-input h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-field label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-field input, .input-field select {
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .input-field input:focus, .input-field select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .parcela-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .parcela-item.pode-antecipar {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .parcela-item.pode-antecipar .parcela-valor {
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .parcela-info {
+            flex: 1;
+        }
+
+        .parcela-titulo {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .parcela-detalhes {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .parcela-valor {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.3em;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        .large-chart {
+            grid-column: 1 / -1;
+        }
+
+        .large-chart .chart-wrapper {
+            height: 400px;
+        }
+
+        .acao-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #10b981;
+        }
+
+        .acao-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .acao-ticker {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        .acao-lucro {
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .acao-prejuizo {
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        .acao-detalhes {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        /* TABELA DE COFRINHOS - VERSÃO TODOS */
+        .cofrinhos-resumo {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .cofrinhos-resumo h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .cofrinhos-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .cofrinhos-table th,
+        .cofrinhos-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .cofrinhos-table th {
+            font-weight: 600;
+            color: #666;
+            text-transform: uppercase;
+            font-size: 0.85em;
+        }
+
+        .cofrinhos-table tr:last-child {
+            font-weight: bold;
+            background: #f9fafb;
+        }
+
+        .cofrinhos-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .bank-selector {
+                flex-direction: column;
+            }
+
+            .acao-detalhes {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="banco-todos">
+    <div class="dashboard-container">
+        <div class="header" id="header">
+            <div class="logo-container">
+                <div class="logo-icon" id="logoIcon">💰</div>
+            </div>
+            <h1 id="headerTitle">Dashboard Financeiro Pro</h1>
+            <p id="headerSubtitle">Controle completo de gastos e investimentos</p>
+        </div>
+
+        <div class="bank-selector">
+            <button class="bank-btn todos active" onclick="mudarBanco('todos')">📊 Todos</button>
+            <button class="bank-btn nubank" onclick="mudarBanco('nubank')">💜 Nubank</button>
+            <button class="bank-btn itau" onclick="mudarBanco('itau')">🔶 Itaú</button>
+            <button class="bank-btn btg" onclick="mudarBanco('btg')">⚡ BTG</button>
+            <button class="bank-btn daytrade" onclick="mudarBanco('daytrade')">📈 Day Trade</button>
+        </div>
+
+        <div class="month-selector">
+            <label for="monthSelect">📅 Período:</label>
+            <select id="monthSelect" onchange="updateDashboard()">
+                <option value="0">Janeiro 2026</option>
+                <option value="1" selected>Fevereiro 2026</option>
+                <option value="2">Março 2026</option>
+                <option value="3">Abril 2026</option>
+                <option value="4">Maio 2026</option>
+                <option value="5">Junho 2026</option>
+                <option value="6">Julho 2026</option>
+                <option value="7">Agosto 2026</option>
+                <option value="8">Setembro 2026</option>
+                <option value="9">Outubro 2026</option>
+                <option value="10">Novembro 2026</option>
+                <option value="11">Dezembro 2026</option>
+                <option value="ano">📈 Ano Completo 2026</option>
+            </select>
+        </div>
+
+        <!-- VIEW TODOS -->
+        <div id="view-todos" class="view-content active">
+            <div class="cards-container">
+                <div class="card">
+                    <div class="card-title">💵 Total Receitas</div>
+                    <div class="card-value card-positive" id="todos-receitas">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💳 Total Despesas</div>
+                    <div class="card-value card-negative" id="todos-despesas">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💰 Economia</div>
+                    <div class="card-value" id="todos-economia">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📊 % Economia</div>
+                    <div class="card-value" id="todos-perc">0%</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🏦 Patrimônio Total</div>
+                    <div class="card-value card-neutral" id="todos-patrimonio">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🏦 Total Cofrinhos</div>
+                    <div class="card-value card-positive" id="todos-cofrinhos">R$ 0,00</div>
+                </div>
+            </div>
+
+            <!-- TABELA RESUMO COFRINHOS - SÓ EM TODOS -->
+            <div class="cofrinhos-resumo">
+                <h3>🏦 Resumo de Todos os Cofrinhos (CDI)</h3>
+                <table class="cofrinhos-table">
+                    <thead>
+                        <tr>
+                            <th>Banco</th>
+                            <th>Principal</th>
+                            <th>Rendimento</th>
+                            <th>Total Atual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>💜 Nubank</td>
+                            <td id="resumo-nubank-principal">R$ 0,00</td>
+                            <td id="resumo-nubank-rendeu" style="color: #10b981;">R$ 0,00</td>
+                            <td id="resumo-nubank-total" style="font-weight: bold;">R$ 0,00</td>
+                        </tr>
+                        <tr>
+                            <td>🔶 Itaú</td>
+                            <td id="resumo-itau-principal">R$ 0,00</td>
+                            <td id="resumo-itau-rendeu" style="color: #10b981;">R$ 0,00</td>
+                            <td id="resumo-itau-total" style="font-weight: bold;">R$ 0,00</td>
+                        </tr>
+                        <tr>
+                            <td>⚡ BTG</td>
+                            <td id="resumo-btg-principal">R$ 0,00</td>
+                            <td id="resumo-btg-rendeu" style="color: #10b981;">R$ 0,00</td>
+                            <td id="resumo-btg-total" style="font-weight: bold;">R$ 0,00</td>
+                        </tr>
+                        <tr style="background: #f3f4f6; font-weight: bold;">
+                            <td>💰 TOTAL GERAL</td>
+                            <td id="resumo-total-principal">R$ 0,00</td>
+                            <td id="resumo-total-rendeu" style="color: #10b981;">R$ 0,00</td>
+                            <td id="resumo-total-geral" style="color: #667eea; font-size: 1.1em;">R$ 0,00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="data-input">
+                <h3>💰 Adicionar Receitas</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Tipo de Receita</label>
+                        <select id="tipoReceita">
+                            <option value="Salário">💵 Salário</option>
+                            <option value="Vale Alimentação">🍽️ Vale Alimentação</option>
+                            <option value="Freelas/Extras">💼 Freelas/Extras</option>
+                            <option value="Rendimentos">📈 Rendimentos</option>
+                            <option value="Outras">📦 Outras</option>
+                        </select>
+                    </div>
+                    <div class="input-field">
+                        <label>Valor (R$)</label>
+                        <input type="number" id="valorReceita" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <button class="btn" onclick="adicionarReceita()">➕ Adicionar Receita</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📝 Adicionar Gasto</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Categoria</label>
+                        <select id="categoria">
+                            <option value="Alimentação">🍽️ Alimentação</option>
+                            <option value="Transporte">🚗 Transporte</option>
+                            <option value="Moradia">🏠 Moradia</option>
+                            <option value="Saúde">💊 Saúde</option>
+                            <option value="Lazer">🎮 Lazer</option>
+                            <option value="Assinaturas">📱 Assinaturas</option>
+                            <option value="Vestuário">👕 Vestuário</option>
+                            <option value="Educação">📚 Educação</option>
+                            <option value="Outros">📦 Outros</option>
+                        </select>
+                    </div>
+                    <div class="input-field">
+                        <label>Valor (R$)</label>
+                        <input type="number" id="valor" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="input-field">
+                        <label>Cartão/Banco</label>
+                        <select id="cartao">
+                            <option value="Nubank">💜 Nubank</option>
+                            <option value="Itaú">🔶 Itaú</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="adicionarGasto()">➕ Adicionar Gasto</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📋 Histórico de Gastos</h3>
+                <div id="historicoGastos"></div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>🍕 Gastos por Categoria</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="categoriasChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>💳 Distribuição por Banco</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="bancosChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card large-chart">
+                    <h3>📈 Evolução Mensal</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="evolucaoChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW NUBANK -->
+        <div id="view-nubank" class="view-content">
+            <!-- COFRINHO NUBANK -->
+            <div class="data-input">
+                <h3>💜 Cofrinho Nubank (CDI)</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Valor Principal (R$)</label>
+                        <input type="number" id="cof_nubank_principal" step="0.01" placeholder="0.00" onchange="salvarCofrinhoBanco('nubank')">
+                    </div>
+                    <div class="input-field">
+                        <label>% do CDI</label>
+                        <input type="number" id="cof_nubank_perc" step="0.01" value="100" onchange="salvarCofrinhoBanco('nubank')">
+                    </div>
+                    <div class="input-field">
+                        <label>Data de Início</label>
+                        <input type="date" id="cof_nubank_inicio" onchange="salvarCofrinhoBanco('nubank')">
+                    </div>
+                </div>
+                <div class="cards-container" style="margin-top: 20px;">
+                    <div class="card">
+                        <div class="card-title">✨ Rendimento Estimado</div>
+                        <div class="card-value card-positive" id="cof_nubank_rendeu">R$ 0,00</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">💎 Total Estimado</div>
+                        <div class="card-value card-neutral" id="cof_nubank_total">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cards-container">
+                <div class="card">
+                    <div class="card-title">💳 Limite Total</div>
+                    <div class="card-value card-neutral" id="nubank-limite">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💸 Gasto no Mês Selecionado</div>
+                    <div class="card-value card-negative" id="nubank-gasto">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">✅ Limite Disponível</div>
+                    <div class="card-value card-positive" id="nubank-disponivel">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📅 Dívida Total Ano</div>
+                    <div class="card-value card-warning" id="nubank-divida-ano">R$ 0,00</div>
+                </div>
+            </div>
+
+            <div class="data-input">
+                <h3>⚙️ Configurar Limite Nubank</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Limite do Cartão (R$)</label>
+                        <input type="number" id="nubankLimite" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <button class="btn" onclick="configurarLimiteNubank()">💾 Salvar Limite</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📝 Adicionar Compra Parcelada</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Descrição</label>
+                        <input type="text" id="nubankDescricao" placeholder="Ex: Notebook">
+                    </div>
+                    <div class="input-field">
+                        <label>Valor da Parcela (R$)</label>
+                        <input type="number" id="nubankValorParcela" placeholder="50.00" step="0.01">
+                    </div>
+                    <div class="input-field">
+                        <label>Número de Parcelas</label>
+                        <input type="number" id="nubankParcelas" placeholder="6" min="1" max="12">
+                    </div>
+                </div>
+                <p style="color: #666; margin-top: 10px; font-size: 0.9em;">💡 Ex: 6 parcelas de R$ 50,00 = Total R$ 300,00</p>
+                <button class="btn" onclick="adicionarParcelaNubank()">➕ Adicionar Parcela</button>
+            </div>
+
+            <div class="data-input">
+                <h3>💵 Gastos Fixos Mensais Obrigatórios</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Descrição</label>
+                        <input type="text" id="gastoFixoDesc" placeholder="Ex: Netflix, Aluguel">
+                    </div>
+                    <div class="input-field">
+                        <label>Valor (R$)</label>
+                        <input type="number" id="gastoFixoValor" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <button class="btn" onclick="adicionarGastoFixo()">➕ Adicionar Gasto Fixo</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📋 Parcelas Ativas (Ordenadas por Valor)</h3>
+                <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">💡 Clique em "Editar" para corrigir valores ou "Remover" para deletar</p>
+                <div id="listaParcelas"></div>
+            </div>
+
+            <div class="data-input">
+                <h3>📋 Gastos Fixos Mensais</h3>
+                <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">💡 Clique em "Editar" para corrigir valores ou "Remover" para deletar</p>
+                <div id="listaGastosFixos"></div>
+            </div>
+
+            <div class="chart-card">
+                <h3>📊 Gastos Nubank por Categoria</h3>
+                <div class="chart-wrapper">
+                    <canvas id="nubankCategoriasChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW ITAÚ -->
+        <div id="view-itau" class="view-content">
+            <!-- COFRINHO ITAÚ -->
+            <div class="data-input">
+                <h3>🔶 Cofrinho Itaú (CDI)</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Valor Principal (R$)</label>
+                        <input type="number" id="cof_itau_principal" step="0.01" placeholder="0.00" onchange="salvarCofrinhoBanco('itau')">
+                    </div>
+                    <div class="input-field">
+                        <label>% do CDI</label>
+                        <input type="number" id="cof_itau_perc" step="0.01" value="100" onchange="salvarCofrinhoBanco('itau')">
+                    </div>
+                    <div class="input-field">
+                        <label>Data de Início</label>
+                        <input type="date" id="cof_itau_inicio" onchange="salvarCofrinhoBanco('itau')">
+                    </div>
+                </div>
+                <div class="cards-container" style="margin-top: 20px;">
+                    <div class="card">
+                        <div class="card-title">✨ Rendimento Estimado</div>
+                        <div class="card-value card-positive" id="cof_itau_rendeu">R$ 0,00</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">💎 Total Estimado</div>
+                        <div class="card-value card-neutral" id="cof_itau_total">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cards-container">
+                <div class="card">
+                    <div class="card-title">💰 Saldo em Conta</div>
+                    <div class="card-value card-positive" id="itau-saldo">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💸 Gasto no Mês</div>
+                    <div class="card-value card-negative" id="itau-gasto">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🏦 Saldo Disponível</div>
+                    <div class="card-value card-neutral" id="itau-disponivel">R$ 0,00</div>
+                </div>
+            </div>
+
+            <div class="data-input">
+                <h3>💰 Atualizar Saldo Itaú</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Saldo Atual (R$)</label>
+                        <input type="number" id="itauSaldo" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <button class="btn" onclick="atualizarSaldoItau()">💾 Atualizar Saldo</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📝 Adicionar Gasto no Débito</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Categoria</label>
+                        <select id="itauCategoria">
+                            <option value="Alimentação">🍽️ Alimentação</option>
+                            <option value="Transporte">🚗 Transporte</option>
+                            <option value="Saúde">💊 Saúde</option>
+                            <option value="Saque">💵 Saque</option>
+                            <option value="Contas/Boletos">📄 Contas/Boletos</option>
+                            <option value="Lazer">🎮 Lazer</option>
+                            <option value="Outros">📦 Outros</option>
+                        </select>
+                    </div>
+                    <div class="input-field">
+                        <label>Valor (R$)</label>
+                        <input type="number" id="itauValor" placeholder="0.00" step="0.01">
+                    </div>
+                </div>
+                <button class="btn" onclick="adicionarGastoItau()">➕ Adicionar Gasto</button>
+            </div>
+
+            <div class="chart-card">
+                <h3>📊 Gastos Itaú por Categoria</h3>
+                <div class="chart-wrapper">
+                    <canvas id="itauCategoriasChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW BTG -->
+        <div id="view-btg" class="view-content">
+            <!-- COFRINHO BTG -->
+            <div class="data-input">
+                <h3>⚡ Cofrinho BTG (CDI)</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Valor Principal (R$)</label>
+                        <input type="number" id="cof_btg_principal" step="0.01" placeholder="0.00" onchange="salvarCofrinhoBanco('btg')">
+                    </div>
+                    <div class="input-field">
+                        <label>% do CDI</label>
+                        <input type="number" id="cof_btg_perc" step="0.01" value="100" onchange="salvarCofrinhoBanco('btg')">
+                    </div>
+                    <div class="input-field">
+                        <label>Data de Início</label>
+                        <input type="date" id="cof_btg_inicio" onchange="salvarCofrinhoBanco('btg')">
+                    </div>
+                </div>
+                <div class="cards-container" style="margin-top: 20px;">
+                    <div class="card">
+                        <div class="card-title">✨ Rendimento Estimado</div>
+                        <div class="card-value card-positive" id="cof_btg_rendeu">R$ 0,00</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-title">💎 Total Estimado</div>
+                        <div class="card-value card-neutral" id="cof_btg_total">R$ 0,00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cards-container">
+                <div class="card">
+                    <div class="card-title">💼 Patrimônio Total</div>
+                    <div class="card-value card-positive" id="btg-patrimonio">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📈 Lucro/Prejuízo Posição</div>
+                    <div class="card-value card-positive" id="btg-rendimento">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📊 Rentabilidade</div>
+                    <div class="card-value card-neutral" id="btg-rentabilidade">0%</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💰 Dividendos Acumulados</div>
+                    <div class="card-value card-positive" id="btg-dividendos-acumulados">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📅 Dividendos/Mês Atual</div>
+                    <div class="card-value card-positive" id="btg-dividendos-mes">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💎 Patrimônio + Dividendos</div>
+                    <div class="card-value card-neutral" id="btg-patrimonio-total-dividendos">R$ 0,00</div>
+                </div>
+            </div>
+
+            <div class="data-input">
+                <h3>📈 Adicionar Ação</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Ticker (Ex: PETR4)</label>
+                        <input type="text" id="acaoTicker" placeholder="PETR4">
+                    </div>
+                    <div class="input-field">
+                        <label>Quantidade</label>
+                        <input type="number" id="acaoQtd" placeholder="100" min="1">
+                    </div>
+                    <div class="input-field">
+                        <label>Preço Médio (R$)</label>
+                        <input type="number" id="acaoPrecoMedio" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="input-field">
+                        <label>Preço Atual (R$)</label>
+                        <input type="number" id="acaoPrecoAtual" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="input-field">
+                        <label>Dividendo Mensal por Ação (R$)</label>
+                        <input type="number" id="acaoDividendos" placeholder="0.05" step="0.01">
+                    </div>
+                    <div class="input-field">
+                        <label>Dividend Yield Anual (%)</label>
+                        <input type="number" id="acaoDividendYield" placeholder="6.5" step="0.01">
+                    </div>
+                </div>
+                <p style="color: #666; margin-top: 10px; font-size: 0.9em;">💡 Ex: R$ 0,05 por ação/mês com 100 ações = R$ 5,00/mês | DY 6% = 0.5% ao mês</p>
+                <button class="btn" onclick="adicionarAcao()">➕ Adicionar Ação</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📊 Carteira de Ações</h3>
+                <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">💡 Clique em "Editar" para atualizar preços ou dividendos</p>
+                <div id="listaAcoes"></div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>💼 Distribuição da Carteira</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="btgCarteiraChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>📈 Rentabilidade por Ação</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="btgRentabilidadeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW DAY TRADE - SEM COFRINHO -->
+        <div id="view-daytrade" class="view-content">
+            <div class="cards-container">
+                <div class="card">
+                    <div class="card-title">💰 Saldo Inicial</div>
+                    <div class="card-value card-neutral" id="daytrade-saldo-inicial">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💵 Saldo Total (Inicial + Lucro)</div>
+                    <div class="card-value" id="daytrade-saldo-atual">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📊 Lucro/Prejuízo Trades</div>
+                    <div class="card-value" id="daytrade-lucro-trades">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">📈 Lucro/Prejuízo Mês</div>
+                    <div class="card-value" id="daytrade-lucro-mes">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">💸 Total Custos Mês</div>
+                    <div class="card-value card-warning" id="daytrade-custos-mes">R$ 0,00</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">🎯 Rentabilidade %</div>
+                    <div class="card-value card-neutral" id="daytrade-rentabilidade">0%</div>
+                </div>
+            </div>
+
+            <div class="data-input">
+                <h3>💰 Configurar Saldo Inicial</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Saldo na Plataforma (R$)</label>
+                        <input type="number" id="dayTradeSaldoInicial" placeholder="500.00" step="0.01">
+                    </div>
+                </div>
+                <button class="btn" onclick="configurarSaldoDayTrade()">💾 Salvar Saldo</button>
+            </div>
+
+            <div class="data-input">
+                <h3>⚙️ Configurar Custo por Contrato</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Custo por Contrato (R$)</label>
+                        <input type="number" id="dayTradeCustoContrato" placeholder="0.50" step="0.01" value="0.50">
+                    </div>
+                </div>
+                <p style="color: #666; margin-top: 10px; font-size: 0.9em;">💡 Padrão: R$ 0,50 por contrato</p>
+                <button class="btn" onclick="configurarCustoContrato()">💾 Salvar Custo</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📝 Adicionar Operação do Dia</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Data</label>
+                        <input type="date" id="dayTradeData">
+                    </div>
+                    <div class="input-field">
+                        <label>Tipo</label>
+                        <select id="dayTradeTipo">
+                            <option value="lucro">✅ Lucro</option>
+                            <option value="prejuizo">❌ Prejuízo</option>
+                        </select>
+                    </div>
+                    <div class="input-field">
+                        <label>Valor da Operação (R$)</label>
+                        <input type="number" id="dayTradeValor" placeholder="50.00" step="0.01">
+                    </div>
+                    <div class="input-field">
+                        <label>Número de Contratos</label>
+                        <input type="number" id="dayTradeContratos" placeholder="2" min="1">
+                    </div>
+                    <div class="input-field">
+                        <label>Observações</label>
+                        <select id="dayTradeObs">
+                            <option value="">Selecione ou digite abaixo</option>
+                            <option value="📈 Mini índice forte alta">📈 Mini índice forte alta</option>
+                            <option value="📉 Mini índice forte queda">📉 Mini índice forte queda</option>
+                            <option value="💵 Dólar em alta">💵 Dólar em alta</option>
+                            <option value="💵 Dólar em queda">💵 Dólar em queda</option>
+                            <option value="⚡ WIN rompeu resistência">⚡ WIN rompeu resistência</option>
+                            <option value="🔻 WIN perdeu suporte">🔻 WIN perdeu suporte</option>
+                            <option value="📊 Mercado lateral">📊 Mercado lateral</option>
+                            <option value="🎯 Stop loss acionado">🎯 Stop loss acionado</option>
+                            <option value="✅ Gain atingido">✅ Gain atingido</option>
+                            <option value="🔥 Volatilidade alta">🔥 Volatilidade alta</option>
+                            <option value="😴 Mercado sem volume">😴 Mercado sem volume</option>
+                            <option value="📰 Notícia econômica importante">📰 Notícia econômica importante</option>
+                            <option value="🌍 Mercado externo influenciando">🌍 Mercado externo influenciando</option>
+                            <option value="⏰ Abertura de mercado">⏰ Abertura de mercado</option>
+                            <option value="🔚 Fechamento de mercado">🔚 Fechamento de mercado</option>
+                            <option value="custom">✏️ Personalizado...</option>
+                        </select>
+                    </div>
+                    <div class="input-field" id="obsCustomContainer" style="display: none;">
+                        <label>Observação Personalizada</label>
+                        <input type="text" id="dayTradeObsCustom" placeholder="Digite sua observação">
+                    </div>
+                </div>
+                <p style="color: #666; margin-top: 10px; font-size: 0.9em;">💡 Custos de contrato serão descontados automaticamente</p>
+                <button class="btn" onclick="adicionarOperacaoDayTrade()">➕ Adicionar Operação</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📊 Resumo Mensal</h3>
+                <div class="cards-container" style="margin-bottom: 15px;">
+                    <div class="card" style="background: #f0f9ff; border-left: 4px solid #3b82f6;">
+                        <div class="card-title">✅ Dias Positivos</div>
+                        <div class="card-value" style="color: #10b981;" id="daytrade-dias-positivos">0</div>
+                    </div>
+                    <div class="card" style="background: #fef2f2; border-left: 4px solid #ef4444;">
+                        <div class="card-title">❌ Dias Negativos</div>
+                        <div class="card-value" style="color: #ef4444;" id="daytrade-dias-negativos">0</div>
+                    </div>
+                    <div class="card" style="background: #f9fafb; border-left: 4px solid #667eea;">
+                        <div class="card-title">📅 Total de Operações</div>
+                        <div class="card-value" style="color: #667eea;" id="daytrade-total-operacoes">0</div>
+                    </div>
+                    <div class="card" style="background: #fffbeb; border-left: 4px solid #f59e0b;">
+                        <div class="card-title">📊 Taxa de Acerto</div>
+                        <div class="card-value" style="color: #f59e0b;" id="daytrade-taxa-acerto">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="data-input">
+                <h3>📋 Histórico de Operações</h3>
+                <p style="color: #666; margin-bottom: 15px; font-size: 0.9em;">💡 Clique em "Editar" para corrigir ou "Remover" para deletar</p>
+                <div id="historicoOperacoes"></div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>📈 Evolução do Saldo</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="dayTradeEvolucaoChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>📊 Lucro vs Prejuízo</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="dayTradeLucroPrejuizoChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card large-chart">
+                    <h3>📅 Performance Mensal 2026</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="dayTradePerformanceMensalChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>🎯 Distribuição de Resultados</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="dayTradeDistribuicaoChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <h3>📊 Win Rate Mensal</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="dayTradeWinRateChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dados = {
+            meses: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+            receitas: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            despesas: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            categorias: {
+                'Alimentação': 0,
+                'Transporte': 0,
+                'Moradia': 0,
+                'Saúde': 0,
+                'Lazer': 0,
+                'Assinaturas': 0,
+                'Vestuário': 0,
+                'Educação': 0,
+                'Outros': 0
+            },
+            nubank: {
+                limite: 0,
+                gasto: 0,
+                despesasMensais: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                parcelas: [],
+                gastosFixos: [],
+                categorias: {}
+            },
+            itau: {
+                saldo: 0,
+                gasto: 0,
+                categorias: {}
+            },
+            btg: {
+                acoes: [],
+                dividendosAcumulados: 0,
+                mesInicioAcumulacao: 1
+            },
+            dayTrade: {
+                saldoInicial: 0,
+                saldoAtual: 0,
+                custoContrato: 0.50,
+                operacoes: []
+            },
+            historicoGastosTodos: [],
+            cofrinhos: {
+                cdiAnual: 10.65,
+                nubank: { principal: 0, percCDI: 100, dataInicio: null, total: 0, rendeu: 0 },
+                itau: { principal: 0, percCDI: 100, dataInicio: null, total: 0, rendeu: 0 },
+                btg: { principal: 0, percCDI: 100, dataInicio: null, total: 0, rendeu: 0 }
+            }
+        };
+
+        let charts = {};
+        let bancoAtual = 'todos';
+
+        // ========== FUNÇÕES DE COFRINHOS ==========
+
+        function salvarCofrinhoBanco(banco) {
+            const principal = parseFloat(document.getElementById(`cof_${banco}_principal`).value) || 0;
+            const percCDI = parseFloat(document.getElementById(`cof_${banco}_perc`).value) || 100;
+            const dataInicio = document.getElementById(`cof_${banco}_inicio`).value;
+            
+            dados.cofrinhos[banco] = {
+                principal,
+                percCDI,
+                dataInicio,
+                total: 0,
+                rendeu: 0
+            };
+            
+            calcularCofrinho(banco);
+            salvarDados();
+            updateResumoCofrinhos();
+        }
+
+        function calcularCofrinho(banco) {
+            const cof = dados.cofrinhos[banco];
+            if (!cof.dataInicio || cof.principal <= 0) {
+                document.getElementById(`cof_${banco}_rendeu`).textContent = 'R$ 0,00';
+                document.getElementById(`cof_${banco}_total`).textContent = 'R$ 0,00';
+                return;
+            }
+            
+            // Taxa CDI diária (252 dias úteis)
+            const taxaDiaria = Math.pow(1 + dados.cofrinhos.cdiAnual/100, 1/252) - 1;
+            const taxaEfetiva = taxaDiaria * (cof.percCDI / 100);
+            
+            const hoje = new Date();
+            const inicio = new Date(cof.dataInicio);
+            const dias = Math.ceil((hoje - inicio) / (1000 * 60 * 60 * 24));
+            
+            // Juros compostos
+            cof.total = cof.principal * Math.pow(1 + taxaEfetiva, dias);
+            cof.rendeu = cof.total - cof.principal;
+            
+            // Atualizar UI do banco específico
+            document.getElementById(`cof_${banco}_rendeu`).textContent = `R$ ${cof.rendeu.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById(`cof_${banco}_total`).textContent = `R$ ${cof.total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        }
+
+        function updateResumoCofrinhos() {
+            // Calcular todos os cofrinhos
+            ['nubank', 'itau', 'btg'].forEach(b => calcularCofrinho(b));
+            
+            let totalPrincipal = 0, totalRendeu = 0, totalGeral = 0;
+            
+            // Atualizar tabela na view Todos
+            ['nubank', 'itau', 'btg'].forEach(banco => {
+                const cof = dados.cofrinhos[banco];
+                document.getElementById(`resumo-${banco}-principal`).textContent = `R$ ${cof.principal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById(`resumo-${banco}-rendeu`).textContent = `R$ ${cof.rendeu.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                document.getElementById(`resumo-${banco}-total`).textContent = `R$ ${cof.total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                
+                totalPrincipal += cof.principal;
+                totalRendeu += cof.rendeu;
+                totalGeral += cof.total;
+            });
+            
+            // Totais gerais
+            document.getElementById('resumo-total-principal').textContent = `R$ ${totalPrincipal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('resumo-total-rendeu').textContent = `R$ ${totalRendeu.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('resumo-total-geral').textContent = `R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            // Atualizar card de cofrinhos na view Todos
+            document.getElementById('todos-cofrinhos').textContent = `R$ ${totalGeral.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+        }
+
+        // ========== NAVEGAÇÃO ==========
+
+        function mudarBanco(banco) {
+            bancoAtual = banco;
+            document.querySelectorAll('.bank-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.bank-btn.${banco}`).classList.add('active');
+            
+            document.querySelectorAll('.view-content').forEach(view => view.classList.remove('active'));
+            document.getElementById(`view-${banco}`).classList.add('active');
+            
+            document.body.className = `banco-${banco}`;
+            
+            const logos = {
+                'todos': { icon: '💰', title: 'Dashboard Financeiro Pro', subtitle: 'Controle completo de gastos e investimentos' },
+                'nubank': { icon: '💜', title: 'Nubank', subtitle: 'Controle de crédito, parcelas e cofrinho' },
+                'itau': { icon: '🔶', title: 'Itaú', subtitle: 'Controle de débito, saldo e cofrinho' },
+                'btg': { icon: '⚡', title: 'BTG Investimentos', subtitle: 'Carteira de ações, dividendos e cofrinho' },
+                'daytrade': { icon: '📈', title: 'Day Trade', subtitle: 'Controle de operações intraday' }
+            };
+            
+            document.getElementById('logoIcon').textContent = logos[banco].icon;
+            document.getElementById('headerTitle').textContent = logos[banco].title;
+            document.getElementById('headerSubtitle').textContent = logos[banco].subtitle;
+            
+            updateDashboard();
+        }
+
+        function initCharts() {
+            const ctxCategorias = document.getElementById('categoriasChart').getContext('2d');
+            charts.categorias = new Chart(ctxCategorias, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(dados.categorias),
+                    datasets: [{
+                        data: Object.values(dados.categorias),
+                        backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#6366f1', '#14b8a6', '#a855f7']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.parsed || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                    return `${context.label}: R$ ${value.toFixed(2)} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const ctxBancos = document.getElementById('bancosChart').getContext('2d');
+            charts.bancos = new Chart(ctxBancos, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Nubank', 'Itaú'],
+                    datasets: [{
+                        data: [dados.nubank.gasto, dados.itau.gasto],
+                        backgroundColor: ['#8b10ff', '#ff8c00']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            const ctxEvolucao = document.getElementById('evolucaoChart').getContext('2d');
+            charts.evolucao = new Chart(ctxEvolucao, {
+                type: 'bar',
+                data: {
+                    labels: dados.meses,
+                    datasets: [
+                        { label: 'Receitas', data: dados.receitas, backgroundColor: '#10b981' },
+                        { label: 'Despesas', data: dados.despesas, backgroundColor: '#ef4444' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            const ctxNubankCat = document.getElementById('nubankCategoriasChart').getContext('2d');
+            charts.nubankCategorias = new Chart(ctxNubankCat, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{ data: [], backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const ctxItauCat = document.getElementById('itauCategoriasChart').getContext('2d');
+            charts.itauCategorias = new Chart(ctxItauCat, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{ data: [], backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f4', '#8b5cf6'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const ctxBtgCarteira = document.getElementById('btgCarteiraChart').getContext('2d');
+            charts.btgCarteira = new Chart(ctxBtgCarteira, {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{ data: [], backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'] }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const ctxBtgRent = document.getElementById('btgRentabilidadeChart').getContext('2d');
+            charts.btgRentabilidade = new Chart(ctxBtgRent, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{ label: 'Rentabilidade %', data: [], backgroundColor: '#10b981' }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const ctxDayTradeEvolucao = document.getElementById('dayTradeEvolucaoChart').getContext('2d');
+            charts.dayTradeEvolucao = new Chart(ctxDayTradeEvolucao, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Saldo',
+                        data: [],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: false } }
+                }
+            });
+
+            const ctxDayTradeLucroPrej = document.getElementById('dayTradeLucroPrejuizoChart').getContext('2d');
+            charts.dayTradeLucroPrejuizo = new Chart(ctxDayTradeLucroPrej, {
+                type: 'bar',
+                data: {
+                    labels: ['Lucros', 'Prejuízos', 'Custos', 'Líquido'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: ['#10b981', '#ef4444', '#f59e0b', '#3b82f6']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            const ctxDayTradePerformanceMensal = document.getElementById('dayTradePerformanceMensalChart').getContext('2d');
+            charts.dayTradePerformanceMensal = new Chart(ctxDayTradePerformanceMensal, {
+                type: 'bar',
+                data: {
+                    labels: dados.meses,
+                    datasets: [
+                        {
+                            label: 'Lucro',
+                            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                            backgroundColor: '#10b981'
+                        },
+                        {
+                            label: 'Prejuízo',
+                            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                            backgroundColor: '#ef4444'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+
+            const ctxDayTradeDistribuicao = document.getElementById('dayTradeDistribuicaoChart').getContext('2d');
+            charts.dayTradeDistribuicao = new Chart(ctxDayTradeDistribuicao, {
+                type: 'pie',
+                data: {
+                    labels: ['Dias Positivos', 'Dias Negativos'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#10b981', '#ef4444']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            const ctxDayTradeWinRate = document.getElementById('dayTradeWinRateChart').getContext('2d');
+            charts.dayTradeWinRate = new Chart(ctxDayTradeWinRate, {
+                type: 'line',
+                data: {
+                    labels: dados.meses,
+                    datasets: [{
+                        label: 'Taxa de Acerto (%)',
+                        data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { 
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDashboard() {
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            
+            if (mesIndex !== 'ano') {
+                calcularDividendosAcumulados();
+            }
+            
+            if (bancoAtual === 'todos') {
+                updateTodosView(mesIndex);
+            } else if (bancoAtual === 'nubank') {
+                updateNubankView();
+            } else if (bancoAtual === 'itau') {
+                updateItauView();
+            } else if (bancoAtual === 'btg') {
+                updateBTGView();
+            } else if (bancoAtual === 'daytrade') {
+                updateDayTradeView();
+            }
+        }
+
+        function updateTodosView(mesIndex) {
+            const receita = mesIndex === 'ano' ? dados.receitas.reduce((a, b) => a + b, 0) : dados.receitas[mesIndex];
+            const despesa = mesIndex === 'ano' ? dados.despesas.reduce((a, b) => a + b, 0) : dados.despesas[mesIndex];
+            const economia = receita - despesa;
+            const percEconomia = receita > 0 ? ((economia / receita) * 100).toFixed(1) : 0;
+            
+            document.getElementById('todos-receitas').textContent = `R$ ${receita.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('todos-despesas').textContent = `R$ ${despesa.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('todos-economia').textContent = `R$ ${economia.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('todos-perc').textContent = `${percEconomia}%`;
+            
+            const economiaEl = document.getElementById('todos-economia');
+            const percEl = document.getElementById('todos-perc');
+            if (economia >= 0) {
+                economiaEl.className = 'card-value card-positive';
+                percEl.className = 'card-value card-positive';
+            } else {
+                economiaEl.className = 'card-value card-negative';
+                percEl.className = 'card-value card-negative';
+            }
+            
+            // Patrimônio total (ações + cofrinhos)
+            const patrimonioAcoes = calcularPatrimonioBTG();
+            const patrimonioCofrinhos = dados.cofrinhos.nubank.total + dados.cofrinhos.itau.total + dados.cofrinhos.btg.total;
+            const patrimonioTotal = patrimonioAcoes + patrimonioCofrinhos;
+            
+            document.getElementById('todos-patrimonio').textContent = `R$ ${patrimonioTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            // Atualizar cofrinhos
+            updateResumoCofrinhos();
+            
+            charts.categorias.data.datasets[0].data = Object.values(dados.categorias);
+            charts.categorias.update();
+            
+            charts.bancos.data.datasets[0].data = [dados.nubank.gasto, dados.itau.gasto];
+            charts.bancos.update();
+            
+            charts.evolucao.data.datasets[0].data = dados.receitas;
+            charts.evolucao.data.datasets[1].data = dados.despesas;
+            charts.evolucao.update();
+            
+            renderHistoricoGastosTodos();
+        }
+
+        function updateNubankView() {
+            const limite = dados.nubank.limite;
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            const dividaAno = dados.nubank.parcelas.reduce((total, p) => total + p.valorTotal, 0);
+            
+            let gastoMes = 0;
+            
+            if (mesIndex !== 'ano') {
+                gastoMes = dados.nubank.despesasMensais[mesIndex];
+                
+                dados.nubank.parcelas.forEach(p => {
+                    const mesFinal = p.mesInicio + p.numParcelas - 1;
+                    if (mesIndex >= p.mesInicio && mesIndex <= mesFinal) {
+                        gastoMes += p.valorParcela;
+                    }
+                });
+                
+                dados.nubank.gastosFixos.forEach(g => {
+                    if (mesIndex >= g.mesInicio) {
+                        gastoMes += g.valor;
+                    }
+                });
+            } else {
+                gastoMes = dados.nubank.gasto;
+            }
+            
+            const disponivel = limite - gastoMes;
+            
+            document.getElementById('nubank-limite').textContent = `R$ ${limite.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('nubank-gasto').textContent = `R$ ${gastoMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('nubank-disponivel').textContent = `R$ ${disponivel.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('nubank-divida-ano').textContent = `R$ ${dividaAno.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            renderParcelas();
+            renderGastosFixos();
+            
+            if (Object.keys(dados.nubank.categorias).length > 0) {
+                charts.nubankCategorias.data.labels = Object.keys(dados.nubank.categorias);
+                charts.nubankCategorias.data.datasets[0].data = Object.values(dados.nubank.categorias);
+                charts.nubankCategorias.update();
+            }
+            
+            // Atualizar cofrinho do Nubank
+            calcularCofrinho('nubank');
+        }
+
+        function updateItauView() {
+            const saldo = dados.itau.saldo;
+            const gasto = dados.itau.gasto;
+            const disponivel = saldo - gasto;
+            
+            document.getElementById('itau-saldo').textContent = `R$ ${saldo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('itau-gasto').textContent = `R$ ${gasto.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('itau-disponivel').textContent = `R$ ${disponivel.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            if (Object.keys(dados.itau.categorias).length > 0) {
+                charts.itauCategorias.data.labels = Object.keys(dados.itau.categorias);
+                charts.itauCategorias.data.datasets[0].data = Object.values(dados.itau.categorias);
+                charts.itauCategorias.update();
+            }
+            
+            // Atualizar cofrinho do Itaú
+            calcularCofrinho('itau');
+        }
+
+        function updateBTGView() {
+            const patrimonio = calcularPatrimonioBTG();
+            const rendimento = calcularRendimentoBTG();
+            const investidoTotal = dados.btg.acoes.reduce((total, acao) => total + (acao.quantidade * acao.precoMedio), 0);
+            const rentabilidade = investidoTotal > 0 ? ((rendimento / investidoTotal) * 100).toFixed(2) : 0;
+            const dividendosMes = calcularDividendosMes();
+            const patrimonioComDividendos = patrimonio + dados.btg.dividendosAcumulados;
+            
+            document.getElementById('btg-patrimonio').textContent = `R$ ${patrimonio.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            const rendimentoEl = document.getElementById('btg-rendimento');
+            rendimentoEl.textContent = `R$ ${rendimento.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            rendimentoEl.className = rendimento >= 0 ? 'card-value card-positive' : 'card-value card-negative';
+            
+            const rentabilidadeEl = document.getElementById('btg-rentabilidade');
+            rentabilidadeEl.textContent = `${rentabilidade}%`;
+            rentabilidadeEl.className = rentabilidade >= 0 ? 'card-value card-positive' : 'card-value card-negative';
+            
+            document.getElementById('btg-dividendos-acumulados').textContent = `R$ ${dados.btg.dividendosAcumulados.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('btg-dividendos-mes').textContent = `R$ ${dividendosMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            document.getElementById('btg-patrimonio-total-dividendos').textContent = `R$ ${patrimonioComDividendos.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            renderAcoes();
+            
+            if (dados.btg.acoes.length > 0) {
+                charts.btgCarteira.data.labels = dados.btg.acoes.map(a => a.ticker);
+                charts.btgCarteira.data.datasets[0].data = dados.btg.acoes.map(a => a.quantidade * a.precoAtual);
+                charts.btgCarteira.update();
+                
+                charts.btgRentabilidade.data.labels = dados.btg.acoes.map(a => a.ticker);
+                charts.btgRentabilidade.data.datasets[0].data = dados.btg.acoes.map(a => {
+                    const lucro = (a.precoAtual - a.precoMedio) * a.quantidade;
+                    const investido = a.precoMedio * a.quantidade;
+                    return investido > 0 ? ((lucro / investido) * 100).toFixed(2) : 0;
+                });
+                charts.btgRentabilidade.update();
+            }
+            
+            // Atualizar cofrinho do BTG
+            calcularCofrinho('btg');
+        }
+
+        function calcularPatrimonioBTG() {
+            return dados.btg.acoes.reduce((total, acao) => total + (acao.quantidade * acao.precoAtual), 0);
+        }
+
+        function calcularRendimentoBTG() {
+            return dados.btg.acoes.reduce((total, acao) => {
+                const lucro = (acao.precoAtual - acao.precoMedio) * acao.quantidade;
+                return total + lucro;
+            }, 0);
+        }
+
+        function calcularDividendosMes() {
+            return dados.btg.acoes.reduce((total, acao) => {
+                return total + (acao.dividendosMensal * acao.quantidade);
+            }, 0);
+        }
+
+        function calcularDividendosAcumulados() {
+            const mesAtual = parseInt(document.getElementById('monthSelect').value);
+            if (mesAtual === 'ano') return;
+            
+            dados.btg.dividendosAcumulados = 0;
+            
+            dados.btg.acoes.forEach(acao => {
+                const mesCompra = acao.mesCompra || dados.btg.mesInicioAcumulacao;
+                const mesesDecorridos = mesAtual - mesCompra;
+                
+                if (mesesDecorridos > 0) {
+                    const dividendosPorAcao = acao.dividendosMensal * acao.quantidade;
+                    dados.btg.dividendosAcumulados += dividendosPorAcao * mesesDecorridos;
+                }
+            });
+        }
+
+        function adicionarReceita() {
+            const valor = parseFloat(document.getElementById('valorReceita').value);
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            
+            if (!valor || valor <= 0 || mesIndex === 'ano') {
+                alert('Selecione um mês específico e insira um valor válido!');
+                return;
+            }
+            
+            dados.receitas[mesIndex] += valor;
+            document.getElementById('valorReceita').value = '';
+            salvarDados();
+            updateDashboard();
+            alert('✅ Receita adicionada!');
+        }
+
+        function adicionarGasto() {
+            const categoria = document.getElementById('categoria').value;
+            const valor = parseFloat(document.getElementById('valor').value);
+            const cartao = document.getElementById('cartao').value;
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            
+            if (!valor || valor <= 0 || mesIndex === 'ano') {
+                alert('Selecione um mês específico e insira um valor válido!');
+                return;
+            }
+            
+            dados.categorias[categoria] = (dados.categorias[categoria] || 0) + valor;
+            dados.despesas[mesIndex] += valor;
+            
+            if (cartao === 'Nubank') {
+                dados.nubank.gasto += valor;
+                dados.nubank.despesasMensais[mesIndex] += valor;
+                dados.nubank.categorias[categoria] = (dados.nubank.categorias[categoria] || 0) + valor;
+            } else {
+                dados.itau.gasto += valor;
+                dados.itau.categorias[categoria] = (dados.itau.categorias[categoria] || 0) + valor;
+            }
+            
+            dados.historicoGastosTodos.push({
+                categoria: categoria,
+                valor: valor,
+                cartao: cartao,
+                mes: mesIndex,
+                timestamp: Date.now()
+            });
+            
+            document.getElementById('valor').value = '';
+            salvarDados();
+            updateDashboard();
+            alert('✅ Gasto adicionado!');
+        }
+
+        function renderHistoricoGastosTodos() {
+            const container = document.getElementById('historicoGastos');
+            if (dados.historicoGastosTodos.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">Nenhum gasto registrado ainda</p>';
+                return;
+            }
+            
+            container.innerHTML = dados.historicoGastosTodos.map((g, i) => {
+                const mesNome = dados.meses[g.mes];
+                return `
+                    <div class="parcela-item">
+                        <div class="parcela-info">
+                            <div class="parcela-titulo">${g.categoria} - ${g.cartao}</div>
+                            <div class="parcela-detalhes">📅 ${mesNome} 2026</div>
+                        </div>
+                        <div class="parcela-valor">R$ ${g.valor.toFixed(2)}</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" onclick="editarGasto(${i})" style="padding: 8px 15px; font-size: 14px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">✏️ Editar</button>
+                            <button class="btn btn-danger" onclick="removerGasto(${i})" style="padding: 8px 15px; font-size: 14px;">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editarGasto(index) {
+            const gasto = dados.historicoGastosTodos[index];
+            
+            const novaCategoria = prompt('Categoria:', gasto.categoria);
+            if (novaCategoria === null) return;
+            
+            const novoValor = prompt('Valor (R$):', gasto.valor);
+            if (novoValor === null) return;
+            const valorNum = parseFloat(novoValor);
+            if (isNaN(valorNum) || valorNum <= 0) {
+                alert('Valor inválido!');
+                return;
+            }
+            
+            dados.categorias[gasto.categoria] -= gasto.valor;
+            dados.despesas[gasto.mes] -= gasto.valor;
+            
+            if (gasto.cartao === 'Nubank') {
+                dados.nubank.gasto -= gasto.valor;
+                dados.nubank.despesasMensais[gasto.mes] -= gasto.valor;
+                dados.nubank.categorias[gasto.categoria] = (dados.nubank.categorias[gasto.categoria] || 0) - gasto.valor;
+            } else {
+                dados.itau.gasto -= gasto.valor;
+                dados.itau.categorias[gasto.categoria] = (dados.itau.categorias[gasto.categoria] || 0) - gasto.valor;
+            }
+            
+            gasto.categoria = novaCategoria;
+            gasto.valor = valorNum;
+            
+            dados.categorias[gasto.categoria] = (dados.categorias[gasto.categoria] || 0) + valorNum;
+            dados.despesas[gasto.mes] += valorNum;
+            
+            if (gasto.cartao === 'Nubank') {
+                dados.nubank.gasto += valorNum;
+                dados.nubank.despesasMensais[gasto.mes] += valorNum;
+                dados.nubank.categorias[gasto.categoria] = (dados.nubank.categorias[gasto.categoria] || 0) + valorNum;
+            } else {
+                dados.itau.gasto += valorNum;
+                dados.itau.categorias[gasto.categoria] = (dados.itau.categorias[gasto.categoria] || 0) + valorNum;
+            }
+            
+            salvarDados();
+            updateDashboard();
+            alert('✅ Gasto editado!');
+        }
+
+        function removerGasto(index) {
+            if (!confirm('Deseja remover este gasto?')) return;
+            
+            const gasto = dados.historicoGastosTodos[index];
+            
+            dados.categorias[gasto.categoria] -= gasto.valor;
+            dados.despesas[gasto.mes] -= gasto.valor;
+            
+            if (gasto.cartao === 'Nubank') {
+                dados.nubank.gasto -= gasto.valor;
+                dados.nubank.despesasMensais[gasto.mes] -= gasto.valor;
+                dados.nubank.categorias[gasto.categoria] = (dados.nubank.categorias[gasto.categoria] || 0) - gasto.valor;
+            } else {
+                dados.itau.gasto -= gasto.valor;
+                dados.itau.categorias[gasto.categoria] = (dados.itau.categorias[gasto.categoria] || 0) - gasto.valor;
+            }
+            
+            if (dados.categorias[gasto.categoria] < 0) dados.categorias[gasto.categoria] = 0;
+            if (dados.despesas[gasto.mes] < 0) dados.despesas[gasto.mes] = 0;
+            if (dados.nubank.gasto < 0) dados.nubank.gasto = 0;
+            if (dados.nubank.despesasMensais[gasto.mes] < 0) dados.nubank.despesasMensais[gasto.mes] = 0;
+            if (dados.itau.gasto < 0) dados.itau.gasto = 0;
+            
+            dados.historicoGastosTodos.splice(index, 1);
+            salvarDados();
+            updateDashboard();
+            alert('✅ Gasto removido!');
+        }
+
+        function configurarLimiteNubank() {
+            const limite = parseFloat(document.getElementById('nubankLimite').value);
+            if (!limite || limite <= 0) {
+                alert('Insira um valor válido!');
+                return;
+            }
+            dados.nubank.limite = limite;
+            document.getElementById('nubankLimite').value = '';
+            salvarDados();
+            updateDashboard();
+            alert('✅ Limite configurado!');
+        }
+
+        function adicionarParcelaNubank() {
+            const descricao = document.getElementById('nubankDescricao').value;
+            const valorParcela = parseFloat(document.getElementById('nubankValorParcela').value);
+            const numParcelas = parseInt(document.getElementById('nubankParcelas').value);
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            
+            if (!descricao || !valorParcela || !numParcelas || valorParcela <= 0 || numParcelas <= 0) {
+                alert('Preencha todos os campos corretamente!');
+                return;
+            }
+            
+            if (mesIndex === 'ano') {
+                alert('Selecione um mês específico para adicionar a parcela!');
+                return;
+            }
+            
+            const valorTotal = valorParcela * numParcelas;
+            dados.nubank.parcelas.push({
+                descricao: descricao,
+                valorParcela: valorParcela,
+                numParcelas: numParcelas,
+                valorTotal: valorTotal,
+                mesInicio: mesIndex
+            });
+            
+            for (let i = 0; i < numParcelas; i++) {
+                const mesAtual = mesIndex + i;
+                if (mesAtual < 12) {
+                    dados.despesas[mesAtual] += valorParcela;
+                    dados.nubank.gasto += valorParcela;
+                }
+            }
+            
+            document.getElementById('nubankDescricao').value = '';
+            document.getElementById('nubankValorParcela').value = '';
+            document.getElementById('nubankParcelas').value = '';
+            
+            salvarDados();
+            updateDashboard();
+            alert(`✅ Parcela adicionada! ${numParcelas}x de R$ ${valorParcela.toFixed(2)} = R$ ${valorTotal.toFixed(2)}`);
+        }
+
+        function adicionarGastoFixo() {
+            const descricao = document.getElementById('gastoFixoDesc').value;
+            const valor = parseFloat(document.getElementById('gastoFixoValor').value);
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            
+            if (!descricao || !valor || valor <= 0) {
+                alert('Preencha todos os campos!');
+                return;
+            }
+            
+            if (mesIndex === 'ano') {
+                alert('Selecione um mês específico para adicionar o gasto fixo!');
+                return;
+            }
+            
+            dados.nubank.gastosFixos.push({ descricao, valor, mesInicio: mesIndex });
+            
+            for (let i = mesIndex; i < 12; i++) {
+                dados.despesas[i] += valor;
+                dados.nubank.gasto += valor;
+            }
+            
+            document.getElementById('gastoFixoDesc').value = '';
+            document.getElementById('gastoFixoValor').value = '';
+            salvarDados();
+            updateDashboard();
+            alert('✅ Gasto fixo adicionado para todos os meses seguintes!');
+        }
+
+        function renderParcelas() {
+            const container = document.getElementById('listaParcelas');
+            const parcelasOrdenadas = [...dados.nubank.parcelas].sort((a, b) => a.valorParcela - b.valorParcela);
+            
+            const totalGastosFixos = dados.nubank.gastosFixos.reduce((sum, g) => sum + g.valor, 0);
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            const despesaMesAtual = mesIndex !== 'ano' ? dados.despesas[mesIndex] : 0;
+            const saldoDisponivel = dados.itau.saldo - totalGastosFixos - despesaMesAtual;
+            
+            if (parcelasOrdenadas.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">Nenhuma parcela ativa</p>';
+                return;
+            }
+            
+            container.innerHTML = parcelasOrdenadas.map((p, i) => {
+                const mesOriginalIndex = dados.nubank.parcelas.indexOf(p);
+                const mesFinal = p.mesInicio + p.numParcelas - 1;
+                const mesFinalNome = mesFinal < 12 ? dados.meses[mesFinal] : 'Dez+';
+                const mesInicioNome = dados.meses[p.mesInicio];
+                
+                const podeAntecipar = p.valorTotal <= saldoDisponivel;
+                const classe = podeAntecipar ? 'parcela-item pode-antecipar' : 'parcela-item';
+                
+                return `
+                    <div class="${classe}">
+                        <div class="parcela-info">
+                            <div class="parcela-titulo">${p.descricao}</div>
+                            <div class="parcela-detalhes">
+                                ${p.numParcelas}x de R$ ${p.valorParcela.toFixed(2)} = R$ ${p.valorTotal.toFixed(2)}<br>
+                                📅 ${mesInicioNome} até ${mesFinalNome} 
+                                ${podeAntecipar ? '<span style="color: #10b981; font-weight: bold;">✅ Pode antecipar!</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="parcela-valor">R$ ${p.valorParcela.toFixed(2)}/mês</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" onclick="editarParcela(${mesOriginalIndex})" style="padding: 8px 15px; font-size: 14px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">✏️</button>
+                            <button class="btn btn-danger" onclick="removerParcela(${mesOriginalIndex})" style="padding: 8px 15px; font-size: 14px;">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editarParcela(index) {
+            const parcela = dados.nubank.parcelas[index];
+            
+            const novaDesc = prompt('Descrição:', parcela.descricao);
+            if (novaDesc === null) return;
+            
+            const novoValorParcela = prompt('Valor da parcela (R$):', parcela.valorParcela);
+            if (novoValorParcela === null) return;
+            const valorParcelaNum = parseFloat(novoValorParcela);
+            
+            const novoNumParcelas = prompt('Número de parcelas:', parcela.numParcelas);
+            if (novoNumParcelas === null) return;
+            const numParcelasNum = parseInt(novoNumParcelas);
+            
+            if (isNaN(valorParcelaNum) || valorParcelaNum <= 0 || isNaN(numParcelasNum) || numParcelasNum <= 0) {
+                alert('Valores inválidos!');
+                return;
+            }
+            
+            for (let i = 0; i < parcela.numParcelas; i++) {
+                const mes = parcela.mesInicio + i;
+                if (mes < 12) {
+                    dados.despesas[mes] -= parcela.valorParcela;
+                    dados.nubank.gasto -= parcela.valorParcela;
+                }
+            }
+            
+            parcela.descricao = novaDesc;
+            parcela.valorParcela = valorParcelaNum;
+            parcela.numParcelas = numParcelasNum;
+            parcela.valorTotal = valorParcelaNum * numParcelasNum;
+            
+            for (let i = 0; i < numParcelasNum; i++) {
+                const mes = parcela.mesInicio + i;
+                if (mes < 12) {
+                    dados.despesas[mes] += valorParcelaNum;
+                    dados.nubank.gasto += valorParcelaNum;
+                }
+            }
+            
+            salvarDados();
+            updateDashboard();
+            alert('✅ Parcela editada!');
+        }
+
+        function renderGastosFixos() {
+            const container = document.getElementById('listaGastosFixos');
+            
+            if (dados.nubank.gastosFixos.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">Nenhum gasto fixo cadastrado</p>';
+                return;
+            }
+            
+            container.innerHTML = dados.nubank.gastosFixos.map((g, i) => {
+                const mesInicioNome = dados.meses[g.mesInicio];
+                const mesesRestantes = 12 - g.mesInicio;
+                return `
+                    <div class="parcela-item">
+                        <div class="parcela-info">
+                            <div class="parcela-titulo">${g.descricao}</div>
+                            <div class="parcela-detalhes">Pagamento mensal obrigatório - Desde ${mesInicioNome} (${mesesRestantes} meses restantes)</div>
+                        </div>
+                        <div class="parcela-valor">R$ ${g.valor.toFixed(2)}/mês</div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" onclick="editarGastoFixo(${i})" style="padding: 8px 15px; font-size: 14px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">✏️</button>
+                            <button class="btn btn-danger" onclick="removerGastoFixo(${i})" style="padding: 8px 15px; font-size: 14px;">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editarGastoFixo(index) {
+            const gastoFixo = dados.nubank.gastosFixos[index];
+            
+            const novaDesc = prompt('Descrição:', gastoFixo.descricao);
+            if (novaDesc === null) return;
+            
+            const novoValor = prompt('Valor mensal (R$):', gastoFixo.valor);
+            if (novoValor === null) return;
+            const valorNum = parseFloat(novoValor);
+            
+            if (isNaN(valorNum) || valorNum <= 0) {
+                alert('Valor inválido!');
+                return;
+            }
+            
+            for (let i = gastoFixo.mesInicio; i < 12; i++) {
+                dados.despesas[i] -= gastoFixo.valor;
+                dados.nubank.gasto -= gastoFixo.valor;
+            }
+            
+            gastoFixo.descricao = novaDesc;
+            gastoFixo.valor = valorNum;
+            
+            for (let i = gastoFixo.mesInicio; i < 12; i++) {
+                dados.despesas[i] += valorNum;
+                dados.nubank.gasto += valorNum;
+            }
+            
+            salvarDados();
+            updateDashboard();
+            alert('✅ Gasto fixo editado!');
+        }
+
+        function removerParcela(index) {
+            if (confirm('Deseja remover esta parcela?')) {
+                const parcela = dados.nubank.parcelas[index];
+                
+                for (let i = 0; i < parcela.numParcelas; i++) {
+                    const mesAtual = parcela.mesInicio + i;
+                    if (mesAtual < 12) {
+                        dados.despesas[mesAtual] -= parcela.valorParcela;
+                        dados.nubank.gasto -= parcela.valorParcela;
+                        
+                        if (dados.despesas[mesAtual] < 0) dados.despesas[mesAtual] = 0;
+                        if (dados.nubank.gasto < 0) dados.nubank.gasto = 0;
+                    }
+                }
+                
+                dados.nubank.parcelas.splice(index, 1);
+                salvarDados();
+                updateDashboard();
+            }
+        }
+
+        function removerGastoFixo(index) {
+            if (confirm('Deseja remover este gasto fixo?')) {
+                const gastoFixo = dados.nubank.gastosFixos[index];
+                
+                for (let i = gastoFixo.mesInicio; i < 12; i++) {
+                    dados.despesas[i] -= gastoFixo.valor;
+                    dados.nubank.gasto -= gastoFixo.valor;
+                    
+                    if (dados.despesas[i] < 0) dados.despesas[i] = 0;
+                    if (dados.nubank.gasto < 0) dados.nubank.gasto = 0;
+                }
+                
+                dados.nubank.gastosFixos.splice(index, 1);
+                salvarDados();
+                updateDashboard();
+            }
+        }
+
+        function atualizarSaldoItau() {
+            const saldo = parseFloat(document.getElementById('itauSaldo').value);
+            if (!saldo || saldo < 0) {
+                alert('Insira um valor válido!');
+                return;
+            }
+            dados.itau.saldo = saldo;
+            document.getElementById('itauSaldo').value = '';
+            salvarDados();
+            updateDashboard();
+            alert('✅ Saldo atualizado!');
+        }
+
+        function adicionarGastoItau() {
+            const categoria = document.getElementById('itauCategoria').value;
+            const valor = parseFloat(document.getElementById('itauValor').value);
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            
+            if (!valor || valor <= 0 || mesIndex === 'ano') {
+                alert('Selecione um mês específico e insira um valor válido!');
+                return;
+            }
+            
+            dados.itau.gasto += valor;
+            dados.itau.categorias[categoria] = (dados.itau.categorias[categoria] || 0) + valor;
+            dados.despesas[mesIndex] += valor;
+            dados.categorias[categoria] = (dados.categorias[categoria] || 0) + valor;
+            
+            document.getElementById('itauValor').value = '';
+            salvarDados();
+            updateDashboard();
+            alert('✅ Gasto adicionado!');
+        }
+
+        function adicionarAcao() {
+            const ticker = document.getElementById('acaoTicker').value.toUpperCase();
+            const qtd = parseInt(document.getElementById('acaoQtd').value);
+            const precoMedio = parseFloat(document.getElementById('acaoPrecoMedio').value);
+            const precoAtual = parseFloat(document.getElementById('acaoPrecoAtual').value);
+            const dividendosMensal = parseFloat(document.getElementById('acaoDividendos').value);
+            const dividendYield = parseFloat(document.getElementById('acaoDividendYield').value);
+            
+            if (!ticker || !qtd || !precoMedio || !precoAtual) {
+                alert('Preencha todos os campos obrigatórios!');
+                return;
+            }
+            
+            dados.btg.acoes.push({
+                ticker: ticker,
+                quantidade: qtd,
+                precoMedio: precoMedio,
+                precoAtual: precoAtual,
+                dividendosMensal: dividendosMensal || 0,
+                dividendYield: dividendYield || 0,
+                mesCompra: parseInt(document.getElementById('monthSelect').value)
+            });
+            
+            document.getElementById('acaoTicker').value = '';
+            document.getElementById('acaoQtd').value = '';
+            document.getElementById('acaoPrecoMedio').value = '';
+            document.getElementById('acaoPrecoAtual').value = '';
+            document.getElementById('acaoDividendos').value = '';
+            document.getElementById('acaoDividendYield').value = '';
+            
+            calcularDividendosAcumulados();
+            salvarDados();
+            updateDashboard();
+            alert('✅ Ação adicionada com sucesso!');
+        }
+
+        function renderAcoes() {
+            const container = document.getElementById('listaAcoes');
+            const mesAtual = parseInt(document.getElementById('monthSelect').value);
+            
+            if (dados.btg.acoes.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">Nenhuma ação na carteira</p>';
+                return;
+            }
+            
+            container.innerHTML = dados.btg.acoes.map((acao, i) => {
+                const investido = acao.quantidade * acao.precoMedio;
+                const atual = acao.quantidade * acao.precoAtual;
+                const lucro = atual - investido;
+                const rentabilidade = ((lucro / investido) * 100).toFixed(2);
+                const classeResultado = lucro >= 0 ? 'acao-lucro' : 'acao-prejuizo';
+                
+                const dividendosMensal = (acao.dividendosMensal || 0) * acao.quantidade;
+                const dividendosAnual = dividendosMensal * 12;
+                
+                const mesCompra = acao.mesCompra || dados.btg.mesInicioAcumulacao;
+                const mesesDecorridos = mesAtual !== 'ano' && mesAtual >= mesCompra ? mesAtual - mesCompra : 0;
+                const dividendosAcumuladosAcao = dividendosMensal * mesesDecorridos;
+                
+                const dividendYieldReal = investido > 0 ? ((dividendosAnual / investido) * 100).toFixed(2) : 0;
+                
+                return `
+                    <div class="acao-item">
+                        <div class="acao-header">
+                            <div class="acao-ticker">${acao.ticker}</div>
+                            <div class="${classeResultado}">${lucro >= 0 ? '+' : ''}R$ ${lucro.toFixed(2)} (${rentabilidade}%)</div>
+                        </div>
+                        <div class="acao-detalhes">
+                            <div><strong>Qtd:</strong> ${acao.quantidade}</div>
+                            <div><strong>PM:</strong> R$ ${acao.precoMedio.toFixed(2)}</div>
+                            <div><strong>Atual:</strong> R$ ${acao.precoAtual.toFixed(2)}</div>
+                            <div><strong>Investido:</strong> R$ ${investido.toFixed(2)}</div>
+                            <div><strong>Posição:</strong> R$ ${atual.toFixed(2)}</div>
+                            <div><strong>Divid/mês:</strong> R$ ${dividendosMensal.toFixed(2)}</div>
+                            <div><strong>Divid/ano:</strong> R$ ${dividendosAnual.toFixed(2)}</div>
+                            <div><strong>DY Real:</strong> ${dividendYieldReal}%</div>
+                            <div style="grid-column: 1 / -1;"><strong>💰 Dividendos Acumulados:</strong> <span style="color: #10b981; font-weight: bold;">R$ ${dividendosAcumuladosAcao.toFixed(2)}</span> (${mesesDecorridos} meses)</div>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button class="btn" onclick="editarAcao(${i})" style="flex: 1; padding: 8px 15px; font-size: 14px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">✏️ Editar</button>
+                            <button class="btn btn-danger" onclick="removerAcao(${i})" style="flex: 1; padding: 8px 15px; font-size: 14px;">🗑️ Remover</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editarAcao(index) {
+            const acao = dados.btg.acoes[index];
+            
+            const novoPrecoAtual = prompt('Preço Atual (R$):', acao.precoAtual);
+            if (novoPrecoAtual === null) return;
+            const precoAtualNum = parseFloat(novoPrecoAtual);
+            
+            const novosDividendosMensal = prompt('Dividendo Mensal por Ação (R$):', acao.dividendosMensal || 0);
+            if (novosDividendosMensal === null) return;
+            const dividendosMensalNum = parseFloat(novosDividendosMensal);
+            
+            const novoDY = prompt('Dividend Yield Anual (%):', acao.dividendYield || 0);
+            if (novoDY === null) return;
+            const dyNum = parseFloat(novoDY);
+            
+            if (isNaN(precoAtualNum) || precoAtualNum <= 0 || isNaN(dividendosMensalNum) || dividendosMensalNum < 0 || isNaN(dyNum) || dyNum < 0) {
+                alert('Valores inválidos!');
+                return;
+            }
+            
+            acao.precoAtual = precoAtualNum;
+            acao.dividendosMensal = dividendosMensalNum;
+            acao.dividendYield = dyNum;
+            
+            calcularDividendosAcumulados();
+            salvarDados();
+            updateDashboard();
+            alert('✅ Ação atualizada com sucesso!');
+        }
+
+        function removerAcao(index) {
+            if (confirm('Deseja remover esta ação?')) {
+                dados.btg.acoes.splice(index, 1);
+                salvarDados();
+                updateDashboard();
+            }
+        }
+
+        function configurarSaldoDayTrade() {
+            const saldo = parseFloat(document.getElementById('dayTradeSaldoInicial').value);
+            if (!saldo || saldo <= 0) {
+                alert('Insira um valor válido!');
+                return;
+            }
+            dados.dayTrade.saldoInicial = saldo;
+            dados.dayTrade.saldoAtual = saldo;
+            document.getElementById('dayTradeSaldoInicial').value = '';
+            salvarDados();
+            updateDashboard();
+            alert('✅ Saldo inicial configurado!');
+        }
+
+        function configurarCustoContrato() {
+            const custo = parseFloat(document.getElementById('dayTradeCustoContrato').value);
+            if (isNaN(custo) || custo < 0) {
+                alert('Insira um valor válido!');
+                return;
+            }
+            dados.dayTrade.custoContrato = custo;
+            salvarDados();
+            updateDashboard();
+            alert('✅ Custo por contrato atualizado!');
+        }
+
+        function adicionarOperacaoDayTrade() {
+            const data = document.getElementById('dayTradeData').value;
+            const tipo = document.getElementById('dayTradeTipo').value;
+            const valor = parseFloat(document.getElementById('dayTradeValor').value);
+            const contratos = parseInt(document.getElementById('dayTradeContratos').value);
+            const obsSelect = document.getElementById('dayTradeObs').value;
+            const obsCustom = document.getElementById('dayTradeObsCustom').value;
+            const obs = obsSelect === 'custom' ? obsCustom : obsSelect;
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            
+            if (!data || !valor || valor <= 0 || !contratos || contratos <= 0) {
+                alert('Preencha todos os campos obrigatórios!');
+                return;
+            }
+            
+            if (mesIndex === 'ano') {
+                alert('Selecione um mês específico!');
+                return;
+            }
+            
+            const custoTotal = contratos * dados.dayTrade.custoContrato;
+            const valorLiquido = tipo === 'lucro' ? valor - custoTotal : -(valor + custoTotal);
+            
+            dados.dayTrade.operacoes.push({
+                data: data,
+                tipo: tipo,
+                valor: valor,
+                contratos: contratos,
+                custoTotal: custoTotal,
+                valorLiquido: valorLiquido,
+                obs: obs,
+                mes: mesIndex
+            });
+            
+            dados.dayTrade.saldoAtual += valorLiquido;
+            
+            document.getElementById('dayTradeData').value = '';
+            document.getElementById('dayTradeValor').value = '';
+            document.getElementById('dayTradeContratos').value = '';
+            document.getElementById('dayTradeObs').value = '';
+            document.getElementById('dayTradeObsCustom').value = '';
+            document.getElementById('obsCustomContainer').style.display = 'none';
+            
+            const hoje = new Date().toISOString().split('T')[0];
+            document.getElementById('dayTradeData').value = hoje;
+            
+            salvarDados();
+            updateDashboard();
+            alert(`✅ Operação adicionada! ${tipo === 'lucro' ? 'Lucro' : 'Prejuízo'}: R$ ${valor.toFixed(2)} | Custos: R$ ${custoTotal.toFixed(2)} | Líquido: R$ ${valorLiquido.toFixed(2)}`);
+        }
+
+        function updateDayTradeView() {
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            
+            const operacoesMes = mesIndex === 'ano' 
+                ? dados.dayTrade.operacoes 
+                : dados.dayTrade.operacoes.filter(op => op.mes === mesIndex);
+            
+            const lucros = operacoesMes.filter(op => op.tipo === 'lucro').reduce((sum, op) => sum + op.valor, 0);
+            const prejuizos = operacoesMes.filter(op => op.tipo === 'prejuizo').reduce((sum, op) => sum + op.valor, 0);
+            const custosMes = operacoesMes.reduce((sum, op) => sum + op.custoTotal, 0);
+            const lucroTradesLiquido = lucros - prejuizos - custosMes;
+            const lucroMes = dados.dayTrade.saldoAtual - dados.dayTrade.saldoInicial;
+            const rentabilidade = dados.dayTrade.saldoInicial > 0 ? ((lucroMes / dados.dayTrade.saldoInicial) * 100).toFixed(2) : 0;
+            
+            document.getElementById('daytrade-saldo-inicial').textContent = `R$ ${dados.dayTrade.saldoInicial.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            const saldoTotal = dados.dayTrade.saldoInicial + lucroMes;
+            const saldoAtualEl = document.getElementById('daytrade-saldo-atual');
+            saldoAtualEl.textContent = `R$ ${saldoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            saldoAtualEl.className = saldoTotal >= dados.dayTrade.saldoInicial ? 'card-value card-positive' : 'card-value card-negative';
+            
+            const lucroTradesEl = document.getElementById('daytrade-lucro-trades');
+            lucroTradesEl.textContent = `R$ ${lucroTradesLiquido.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            lucroTradesEl.className = lucroTradesLiquido >= 0 ? 'card-value card-positive' : 'card-value card-negative';
+            
+            const lucroMesEl = document.getElementById('daytrade-lucro-mes');
+            lucroMesEl.textContent = `R$ ${lucroMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            lucroMesEl.className = lucroMes >= 0 ? 'card-value card-positive' : 'card-value card-negative';
+            
+            document.getElementById('daytrade-custos-mes').textContent = `R$ ${custosMes.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+            
+            const rentabilidadeEl = document.getElementById('daytrade-rentabilidade');
+            rentabilidadeEl.textContent = `${rentabilidade}%`;
+            rentabilidadeEl.className = rentabilidade >= 0 ? 'card-value card-positive' : 'card-value card-negative';
+            
+            const diasPositivos = operacoesMes.filter(op => op.tipo === 'lucro').length;
+            const diasNegativos = operacoesMes.filter(op => op.tipo === 'prejuizo').length;
+            const totalOperacoes = operacoesMes.length;
+            const taxaAcerto = totalOperacoes > 0 ? ((diasPositivos / totalOperacoes) * 100).toFixed(1) : 0;
+            
+            document.getElementById('daytrade-dias-positivos').textContent = diasPositivos;
+            document.getElementById('daytrade-dias-negativos').textContent = diasNegativos;
+            document.getElementById('daytrade-total-operacoes').textContent = totalOperacoes;
+            document.getElementById('daytrade-taxa-acerto').textContent = `${taxaAcerto}%`;
+            
+            renderHistoricoOperacoes();
+            
+            if (dados.dayTrade.operacoes.length > 0) {
+                const operacoesOrdenadas = [...dados.dayTrade.operacoes].sort((a, b) => new Date(a.data) - new Date(b.data));
+                let saldoAcumulado = dados.dayTrade.saldoInicial;
+                const saldos = [saldoAcumulado];
+                const datas = ['Início'];
+                
+                operacoesOrdenadas.forEach(op => {
+                    saldoAcumulado += op.valorLiquido;
+                    saldos.push(saldoAcumulado);
+                    datas.push(new Date(op.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }));
+                });
+                
+                charts.dayTradeEvolucao.data.labels = datas;
+                charts.dayTradeEvolucao.data.datasets[0].data = saldos;
+                charts.dayTradeEvolucao.update();
+                
+                charts.dayTradeLucroPrejuizo.data.datasets[0].data = [lucros, prejuizos, custosMes, lucroTradesLiquido];
+                charts.dayTradeLucroPrejuizo.update();
+                
+                const lucrosPorMes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                const prejuizosPorMes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                const winRatePorMes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+                
+                dados.dayTrade.operacoes.forEach(op => {
+                    if (op.tipo === 'lucro') {
+                        lucrosPorMes[op.mes] += op.valor;
+                    } else {
+                        prejuizosPorMes[op.mes] += op.valor;
+                    }
+                });
+                
+                for (let i = 0; i < 12; i++) {
+                    const opsMes = dados.dayTrade.operacoes.filter(op => op.mes === i);
+                    const lucrosMes = opsMes.filter(op => op.tipo === 'lucro').length;
+                    const totalMes = opsMes.length;
+                    winRatePorMes[i] = totalMes > 0 ? ((lucrosMes / totalMes) * 100).toFixed(1) : 0;
+                }
+                
+                charts.dayTradePerformanceMensal.data.datasets[0].data = lucrosPorMes;
+                charts.dayTradePerformanceMensal.data.datasets[1].data = prejuizosPorMes;
+                charts.dayTradePerformanceMensal.update();
+                
+                charts.dayTradeDistribuicao.data.datasets[0].data = [diasPositivos, diasNegativos];
+                charts.dayTradeDistribuicao.update();
+                
+                charts.dayTradeWinRate.data.datasets[0].data = winRatePorMes;
+                charts.dayTradeWinRate.update();
+            }
+        }
+
+        function renderHistoricoOperacoes() {
+            const container = document.getElementById('historicoOperacoes');
+            const mesIndex = parseInt(document.getElementById('monthSelect').value);
+            
+            const operacoesExibir = mesIndex === 'ano' 
+                ? dados.dayTrade.operacoes 
+                : dados.dayTrade.operacoes.filter(op => op.mes === mesIndex);
+            
+            if (operacoesExibir.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center;">Nenhuma operação registrada</p>';
+                return;
+            }
+            
+            const operacoesOrdenadas = [...operacoesExibir].sort((a, b) => new Date(b.data) - new Date(a.data));
+            
+            container.innerHTML = operacoesOrdenadas.map((op, i) => {
+                const indexOriginal = dados.dayTrade.operacoes.indexOf(op);
+                const dataFormatada = new Date(op.data + 'T00:00:00').toLocaleDateString('pt-BR');
+                const icone = op.tipo === 'lucro' ? '✅' : '❌';
+                const corBorda = op.tipo === 'lucro' ? '#10b981' : '#ef4444';
+                const bgColor = op.tipo === 'lucro' ? '#f0fdf4' : '#fef2f2';
+                
+                return `
+                    <div class="parcela-item" style="border-left-color: ${corBorda}; background: ${bgColor};">
+                        <div class="parcela-info">
+                            <div class="parcela-titulo">${icone} ${op.tipo === 'lucro' ? 'LUCRO' : 'PREJUÍZO'} - ${dataFormatada}</div>
+                            <div class="parcela-detalhes">
+                                💰 Valor: R$ ${op.valor.toFixed(2)} | 📊 Contratos: ${op.contratos} | 💸 Custos: R$ ${op.custoTotal.toFixed(2)}
+                                ${op.obs ? `<br>📝 ${op.obs}` : ''}
+                            </div>
+                        </div>
+                        <div class="parcela-valor" style="color: ${op.tipo === 'lucro' ? '#10b981' : '#ef4444'};">
+                            ${op.valorLiquido >= 0 ? '+' : ''}R$ ${op.valorLiquido.toFixed(2)}
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn" onclick="editarOperacaoDayTrade(${indexOriginal})" style="padding: 8px 15px; font-size: 14px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">✏️</button>
+                            <button class="btn btn-danger" onclick="removerOperacaoDayTrade(${indexOriginal})" style="padding: 8px 15px; font-size: 14px;">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function editarOperacaoDayTrade(index) {
+            const op = dados.dayTrade.operacoes[index];
+            
+            const novoTipo = confirm('Operação foi LUCRO?\nOK = Sim (Lucro)\nCancelar = Não (Prejuízo)') ? 'lucro' : 'prejuizo';
+            
+            const novoValor = prompt('Valor da operação (R$):', op.valor);
+            if (novoValor === null) return;
+            const valorNum = parseFloat(novoValor);
+            
+            const novosContratos = prompt('Número de contratos:', op.contratos);
+            if (novosContratos === null) return;
+            const contratosNum = parseInt(novosContratos);
+            
+            if (isNaN(valorNum) || valorNum <= 0 || isNaN(contratosNum) || contratosNum <= 0) {
+                alert('Valores inválidos!');
+                return;
+            }
+            
+            dados.dayTrade.saldoAtual -= op.valorLiquido;
+            
+            const custoTotal = contratosNum * dados.dayTrade.custoContrato;
+            const valorLiquido = novoTipo === 'lucro' ? valorNum - custoTotal : -(valorNum + custoTotal);
+            
+            op.tipo = novoTipo;
+            op.valor = valorNum;
+            op.contratos = contratosNum;
+            op.custoTotal = custoTotal;
+            op.valorLiquido = valorLiquido;
+            
+            dados.dayTrade.saldoAtual += valorLiquido;
+            
+            salvarDados();
+            updateDashboard();
+            alert('✅ Operação editada!');
+        }
+
+        function removerOperacaoDayTrade(index) {
+            if (!confirm('Deseja remover esta operação?')) return;
+            
+            const op = dados.dayTrade.operacoes[index];
+            dados.dayTrade.saldoAtual -= op.valorLiquido;
+            dados.dayTrade.operacoes.splice(index, 1);
+            
+            salvarDados();
+            updateDashboard();
+            alert('✅ Operação removida!');
+        }
+
+        // STORAGE
+        function salvarDados() {
+            localStorage.setItem('dashboardFinanceiro', JSON.stringify(dados));
+        }
+
+        function carregarDados() {
+            const salvos = localStorage.getItem('dashboardFinanceiro');
+            if (salvos) {
+                dados = JSON.parse(salvos);
+            }
+        }
+
+        function aplicarDadosNosInputs() {
+            // Cofrinhos
+            ['nubank', 'itau', 'btg'].forEach(b => {
+                const cof = dados.cofrinhos[b];
+                document.getElementById(`cof_${b}_principal`).value = cof.principal || '';
+                document.getElementById(`cof_${b}_perc`).value = cof.percCDI || 100;
+                document.getElementById(`cof_${b}_inicio`).value = cof.dataInicio || '';
+            });
+            
+            // Day Trade
+            document.getElementById('dayTradeData').value = new Date().toISOString().split('T')[0];
+        }
+
+        // Event listener para observação customizada
+        document.addEventListener('DOMContentLoaded', function() {
+            const obsSelect = document.getElementById('dayTradeObs');
+            const obsCustomContainer = document.getElementById('obsCustomContainer');
+            
+            if (obsSelect) {
+                obsSelect.addEventListener('change', function() {
+                    obsCustomContainer.style.display = this.value === 'custom' ? 'block' : 'none';
+                });
+            }
+        });
+
+        window.onload = function() {
+            carregarDados();
+            initCharts();
+            aplicarDadosNosInputs();
+            updateDashboard();
+        };
+    </script>
+</body>
+</html>

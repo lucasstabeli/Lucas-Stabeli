@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CONTROLE FINANCEIRO</title>
+    <meta name="theme-color" content="#10b981">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        body.banco-itau { background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%); }
+        body.banco-btg { background: linear-gradient(135deg, #1a1a1a 0%, #000000 100%); }
+        .dashboard-container { max-width: 1600px; margin: 0 auto; padding: 15px; }
+        .header { text-align: center; color: white; margin-bottom: 20px; padding: 25px; background: rgba(255,255,255,0.15); border-radius: 20px; }
+        .header h1 { font-size: 2em; margin-bottom: 5px; font-weight: 700; }
+        .bank-selector { background: rgba(255,255,255,0.95); padding: 15px; border-radius: 15px; margin-bottom: 20px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+        .bank-btn { padding: 14px 28px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; min-height: 50px; transition: all 0.2s; }
+        .bank-btn.todos { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+        .bank-btn.itau { background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%); color: white; }
+        .bank-btn.btg { background: #000; color: #ffd700; border: 2px solid #ffd700; }
+        .bank-btn.active { transform: scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+        .month-selector { background: rgba(255,255,255,0.95); padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 10px; align-items: center; justify-content: center; flex-wrap: wrap; }
+        .month-selector select { padding: 12px; border: 2px solid #10b981; border-radius: 10px; font-size: 16px; min-height: 48px; }
+        .view-content { display: none; }
+        .view-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .cards-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .card { background: rgba(255,255,255,0.98); padding: 20px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .card-title { font-size: 0.85em; color: #6b7280; margin-bottom: 8px; text-transform: uppercase; font-weight: 600; }
+        .card-value { font-size: 1.8em; font-weight: 700; }
+        .card-positive { color: #10b981; } .card-negative { color: #ef4444; } .card-neutral { color: #3b82f6; } .card-warning { color: #f59e0b; }
+        .data-input { background: rgba(255,255,255,0.98); padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .data-input h3 { margin-bottom: 20px; color: #111827; font-size: 1.2em; font-weight: 600; }
+        .input-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .input-field { display: flex; flex-direction: column; }
+        .input-field label { margin-bottom: 8px; font-weight: 600; color: #374151; }
+        .input-field input, .input-field select { padding: 14px; border: 2px solid #e5e7eb; border-radius: 10px; font-size: 16px; min-height: 48px; }
+        .input-field input:focus, .input-field select:focus { outline: none; border-color: #10b981; }
+        .btn { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 16px 32px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; min-height: 52px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(16,185,129,0.3); width: 100%; }
+        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .btn-secondary { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .parcela-item { display: flex; justify-content: space-between; align-items: center; padding: 18px; background: #f9fafb; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid #10b981; flex-wrap: wrap; gap: 12px; }
+        .parcela-info { flex: 1; min-width: 200px; }
+        .parcela-titulo { font-weight: 700; color: #111827; margin-bottom: 4px; }
+        .parcela-detalhes { font-size: 0.9em; color: #6b7280; }
+        .parcela-valor { font-size: 1.3em; font-weight: 700; color: #ef4444; }
+        .parcela-actions { display: flex; gap: 8px; }
+        .charts-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .chart-card { background: rgba(255,255,255,0.98); padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .chart-wrapper { position: relative; height: 250px; }
+        .large-chart { grid-column: 1 / -1; } .large-chart .chart-wrapper { height: 300px; }
+        .acao-item { background: #f9fafb; padding: 20px; border-radius: 12px; margin-bottom: 12px; border-left: 4px solid #10b981; }
+        .acao-header { display: flex; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; }
+        .acao-ticker { font-weight: 700; font-size: 1.2em; color: #111827; }
+        .acao-lucro { color: #10b981; font-weight: 700; } .acao-prejuizo { color: #ef4444; font-weight: 700; }
+        .acao-detalhes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 0.9em; color: #6b7280; }
+        .cofrinhos-resumo { background: rgba(255,255,255,0.98); padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 20px; overflow-x: auto; }
+        .cofrinhos-table { width: 100%; border-collapse: collapse; min-width: 400px; }
+        .cofrinhos-table th, .cofrinhos-table td { padding: 15px; text-align: left; border-bottom: 1px solid #e5e7eb; }
+        .cofrinhos-table th { font-weight: 600; color: #6b7280; text-transform: uppercase; font-size: 0.75em; }
+        .empty-state { text-align: center; color: #9ca3af; padding: 40px; font-style: italic; }
+        .info-text { color: #6b7280; font-size: 0.9em; margin-top: 10px; margin-bottom: 15px; }
+        .total-box { margin-top: 15px; padding: 15px; background: #f3f4f6; border-radius: 10px; text-align: right; font-weight: 600; }
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.5em; }
+            .cards-container { grid-template-columns: 1fr; }
+            .input-group { grid-template-columns: 1fr; }
+            .charts-container { grid-template-columns: 1fr; }
+            .parcela-item { flex-direction: column; align-items: flex-start; }
+            .parcela-actions { width: 100%; } 
+            .parcela-actions .btn { flex: 1; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body class="banco-todos">
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>💰 CONTROLE FINANCEIRO</h1>
+            <p>Gerencie suas finanças de forma simples</p>
+        </div>
+        <div class="bank-selector">
+            <button class="bank-btn todos active" data-banco="todos">📊 Geral</button>
+            <button class="bank-btn itau" data-banco="itau">🔶 Itaú</button>
+            <button class="bank-btn btg" data-banco="btg">⚡ BTG</button>
+        </div>
+        <div class="month-selector">
+            <label for="monthSelect">📅 Período:</label>
+            <select id="monthSelect">
+                <option value="0">Janeiro 2026</option><option value="1" selected>Fevereiro 2026</option><option value="2">Março 2026</option><option value="3">Abril 2026</option><option value="4">Maio 2026</option><option value="5">Junho 2026</option><option value="6">Julho 2026</option><option value="7">Agosto 2026</option><option value="8">Setembro 2026</option><option value="9">Outubro 2026</option><option value="10">Novembro 2026</option><option value="11">Dezembro 2026</option><option value="ano">📈 Ano Completo 2026</option>
+            </select>
+        </div>
+
+        <!-- VIEW TODOS -->
+        <div id="view-todos" class="view-content active">
+            <div class="cards-container">
+                <div class="card"><div class="card-title">💵 Total Receitas</div><div class="card-value card-positive" id="todos-receitas">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">💳 Total Despesas</div><div class="card-value card-negative" id="todos-despesas">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">💰 Economia</div><div class="card-value" id="todos-economia">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">📊 % Economia</div><div class="card-value" id="todos-perc">0%</div></div>
+                <div class="card"><div class="card-title">🏦 Patrimônio Total</div><div class="card-value card-neutral" id="todos-patrimonio">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">🏦 Total Cofrinhos</div><div class="card-value card-positive" id="todos-cofrinhos">R$ 0,00</div></div>
+            </div>
+            <div class="cofrinhos-resumo">
+                <h3>🏦 Resumo dos Cofrinhos (CDI)</h3>
+                <table class="cofrinhos-table">
+                    <thead><tr><th>Banco</th><th>Principal</th><th>Rendimento</th><th>Total Atual</th></tr></thead>
+                    <tbody>
+                        <tr><td>🔶 Itaú</td><td id="resumo-itau-principal">R$ 0,00</td><td id="resumo-itau-rendeu" style="color:#10b981">R$ 0,00</td><td id="resumo-itau-total" style="font-weight:bold">R$ 0,00</td></tr>
+                        <tr><td>⚡ BTG</td><td id="resumo-btg-principal">R$ 0,00</td><td id="resumo-btg-rendeu" style="color:#10b981">R$ 0,00</td><td id="resumo-btg-total" style="font-weight:bold">R$ 0,00</td></tr>
+                        <tr style="font-weight:bold;background:#f3f4f6"><td>💰 TOTAL</td><td id="resumo-total-principal">R$ 0,00</td><td id="resumo-total-rendeu" style="color:#10b981">R$ 0,00</td><td id="resumo-total-geral" style="color:#059669;font-size:1.1em">R$ 0,00</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="data-input">
+                <h3>💰 Adicionar Receita</h3>
+                <div class="input-group">
+                    <div class="input-field"><label>Tipo de Receita</label><select id="tipoReceita"><option value="Salário">💵 Salário</option><option value="Vale Alimentação">🍽️ Vale Alimentação</option><option value="Freelas/Extras">💼 Freelas/Extras</option><option value="Rendimentos">📈 Rendimentos</option><option value="Outras">📦 Outras</option></select></div>
+                    <div class="input-field"><label>Valor (R$)</label><input type="number" id="valorReceita" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+                </div>
+                <button class="btn" id="btnAddReceita">➕ Adicionar Receita</button>
+            </div>
+            <div class="data-input">
+                <h3>📝 Adicionar Gasto</h3>
+                <div class="input-group">
+                    <div class="input-field"><label>Categoria</label><select id="categoria"><option value="Alimentação">🍽️ Alimentação</option><option value="Padaria">🥖 Padaria</option><option value="Mercado">🛒 Mercado</option><option value="Transporte">🚗 Transporte</option><option value="Moradia">🏠 Moradia</option><option value="Saúde">💊 Saúde</option><option value="Lazer">🎮 Lazer</option><option value="Vestuário">👕 Vestuário</option><option value="Outros">📦 Outros</option></select></div>
+                    <div class="input-field"><label>Valor (R$)</label><input type="number" id="valor" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+                    <div class="input-field"><label>Banco</label><select id="cartao"><option value="Itaú">🔶 Itaú</option></select></div>
+                </div>
+                <button class="btn" id="btnAddGasto">➕ Adicionar Gasto</button>
+            </div>
+            <div class="data-input">
+                <h3>📋 Histórico de Gastos</h3>
+                <div id="historicoGastos"><p class="empty-state">Nenhum gasto registrado ainda</p></div>
+            </div>
+            <div class="charts-container">
+                <div class="chart-card"><h3>🍕 Gastos por Categoria</h3><div class="chart-wrapper"><canvas id="categoriasChart"></canvas></div></div>
+                <div class="chart-card"><h3>💳 Distribuição por Banco</h3><div class="chart-wrapper"><canvas id="bancosChart"></canvas></div></div>
+                <div class="chart-card large-chart"><h3>📈 Evolução Mensal</h3><div class="chart-wrapper"><canvas id="evolucaoChart"></canvas></div></div>
+            </div>
+        </div>
+
+        <!-- VIEW ITAÚ -->
+        <div id="view-itau" class="view-content">
+            <!-- CARTÃO DE CRÉDITO -->
+            <div class="cards-container">
+                <div class="card"><div class="card-title">💳 Limite Total</div><div class="card-value card-neutral" id="itau-limite-total">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">💸 Gasto no Mês (Parcelas)</div><div class="card-value card-negative" id="itau-gasto-mes">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">📌 Gastos Fixos/Mês</div><div class="card-value card-warning" id="itau-gastos-fixos-total">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">✅ Limite Disponível</div><div class="card-value card-positive" id="itau-limite-disponivel">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">📊 Dívida Total Ano</div><div class="card-value card-neutral" id="itau-divida-total">R$ 0,00</div></div>
+            </div>
+
+            <div class="data-input">
+                <h3>⚙️ Configurar Limite Itaú</h3>
+                <div class="input-group"><div class="input-field"><label>Limite do Cartão (R$)</label><input type="number" id="itauLimiteCartao" placeholder="0,00" step="0.01" inputmode="decimal"></div></div>
+                <button class="btn" id="btnSalvarLimiteItau">💾 Salvar Limite</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📝 Adicionar Compra Parcelada</h3>
+                <div class="input-group">
+                    <div class="input-field"><label>Descrição</label><input type="text" id="itauParcelaDescricao" placeholder="Ex: Notebook, TV, etc"></div>
+                    <div class="input-field"><label>Valor da Parcela (R$)</label><input type="number" id="itauParcelaValor" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+                    <div class="input-field"><label>Número de Parcelas</label><input type="number" id="itauParcelaNumero" placeholder="6" min="1" max="24" inputmode="numeric"></div>
+                    <div class="input-field"><label>Mês da Primeira Parcela</label><select id="itauParcelaMes"><option value="0">Janeiro</option><option value="1">Fevereiro</option><option value="2">Março</option><option value="3">Abril</option><option value="4">Maio</option><option value="5">Junho</option><option value="6">Julho</option><option value="7">Agosto</option><option value="8">Setembro</option><option value="9">Outubro</option><option value="10">Novembro</option><option value="11">Dezembro</option></select></div>
+                </div>
+                <p class="info-text">💡 Ex: 6 parcelas de R$ 50,00 = Total R$ 300,00</p>
+                <button class="btn" id="btnAddParcelaItau">➕ Adicionar Parcela</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📋 Parcelas Ativas (Ordenadas por Valor)</h3>
+                <p class="info-text">💡 Clique em "Editar" para corrigir valores ou "Remover" para deletar</p>
+                <div id="listaParcelasItau"><p class="empty-state">Nenhuma parcela ativa</p></div>
+            </div>
+
+            <!-- GASTOS FIXOS MENSAIS -->
+            <div class="data-input">
+                <h3>💵 Gastos Fixos Mensais </h3>
+                <div class="input-group">
+                    <div class="input-field"><label>Descrição</label><input type="text" id="itauGastoFixoDescricao" placeholder="Ex: Netflix, Aluguel, Academia"></div>
+                    <div class="input-field"><label>Valor (R$)</label><input type="number" id="itauGastoFixoValor" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+                </div>
+                <button class="btn" id="btnAddGastoFixoItau">➕ Adicionar Gasto Fixo</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📋 Gastos Fixos Mensais</h3>
+                <p class="info-text">💡 Clique em "Editar" para corrigir valores ou "Remover" para deletar</p>
+                <div id="listaGastosFixosItau"><p class="empty-state">Nenhum gasto fixo cadastrado</p></div>
+            </div>
+
+            <!-- COFRINHO E CONTA CORRENTE -->
+            <div class="data-input">
+                <h3>🔶 Cofrinho Itaú (CDI)</h3>
+                <div class="input-group">
+                    <div class="input-field"><label>Valor Principal (R$)</label><input type="number" id="cof_itau_principal" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+                    <div class="input-field"><label>% do CDI</label><input type="number" id="cof_itau_perc" step="0.01" value="100" inputmode="decimal"></div>
+                    <div class="input-field"><label>Data de Início</label><input type="date" id="cof_itau_inicio"></div>
+                </div>
+                <div class="cards-container" style="margin-top:20px">
+                    <div class="card"><div class="card-title">✨ Rendimento Estimado</div><div class="card-value card-positive" id="cof_itau_rendeu">R$ 0,00</div></div>
+                    <div class="card"><div class="card-title">💎 Total Estimado</div><div class="card-value card-neutral" id="cof_itau_total">R$ 0,00</div></div>
+                </div>
+            </div>
+
+            <div class="cards-container">
+                <div class="card"><div class="card-title">💰 Saldo em Conta</div><div class="card-value card-positive" id="itau-saldo">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">💸 Gasto no Mês (Débito)</div><div class="card-value card-negative" id="itau-gasto-debito">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">🏦 Saldo Disponível</div><div class="card-value card-neutral" id="itau-disponivel">R$ 0,00</div></div>
+            </div>
+
+            <div class="data-input">
+                <h3>💰 Atualizar Saldo Conta Corrente</h3>
+                <div class="input-group"><div class="input-field"><label>Saldo Atual (R$)</label><input type="number" id="itauSaldo" placeholder="0,00" step="0.01" inputmode="decimal"></div></div>
+                <button class="btn" id="btnAtualizarSaldo">💾 Atualizar Saldo</button>
+            </div>
+
+            <div class="data-input">
+                <h3>📝 Adicionar Gasto no Débito</h3>
+                <div class="input-group">
+                    <div class="input-field"><label>Categoria</label><select id="itauCategoria"><option value="Alimentação">🍽️ Alimentação</option><option value="Padaria">🥖 Padaria</option><option value="Mercado">🛒 Mercado</option><option value="Transporte">🚗 Transporte</option><option value="Saúde">💊 Saúde</option><option value="Saque">💵 Saque</option><option value="Contas/Boletos">📄 Contas/Boletos</option><option value="Lazer">🎮 Lazer</option><option value="Outros">📦 Outros</option></select></div>
+                    <div class="input-field"><label>Valor (R$)</label><input type="number" id="itauValor" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+                </div>
+                <button class="btn" id="btnAddGastoItau">➕ Adicionar Gasto</button>
+            </div>
+
+            <div class="chart-card"><h3>📊 Gastos Itaú por Categoria</h3><div class="chart-wrapper"><canvas id="itauCategoriasChart"></canvas></div></div>
+        </div>
+
+        <!-- VIEW BTG -->
+        <div id="view-btg" class="view-content">
+            <div class="data-input">
+                <h3>⚡ Cofrinho BTG (CDI)</h3>
+                <div class="input-group">
+                    <div class="input-field"><label>Valor Principal (R$)</label><input type="number" id="cof_btg_principal" step="0.01" placeholder="0,00" inputmode="decimal"></div>
+                    <div class="input-field"><label>% do CDI</label><input type="number" id="cof_btg_perc" step="0.01" value="100" inputmode="decimal"></div>
+                    <div class="input-field"><label>Data de Início</label><input type="date" id="cof_btg_inicio"></div>
+                </div>
+                <div class="cards-container" style="margin-top:20px">
+                    <div class="card"><div class="card-title">✨ Rendimento Estimado</div><div class="card-value card-positive" id="cof_btg_rendeu">R$ 0,00</div></div>
+                    <div class="card"><div class="card-title">💎 Total Estimado</div><div class="card-value card-neutral" id="cof_btg_total">R$ 0,00</div></div>
+                </div>
+            </div>
+            <div class="cards-container">
+                <div class="card"><div class="card-title">💼 Patrimônio Total</div><div class="card-value card-positive" id="btg-patrimonio">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">📈 Lucro/Prejuízo</div><div class="card-value card-positive" id="btg-rendimento">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">📊 Rentabilidade</div><div class="card-value card-neutral" id="btg-rentabilidade">0%</div></div>
+                <div class="card"><div class="card-title">💰 Dividendos Acumulados</div><div class="card-value card-positive" id="btg-dividendos-acumulados">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">📅 Dividendos/Mês</div><div class="card-value card-positive" id="btg-dividendos-mes">R$ 0,00</div></div>
+                <div class="card"><div class="card-title">💎 Patrimônio + Dividendos</div><div class="card-value card-neutral" id="btg-patrimonio-total-dividendos">R$ 0,00</div></div>
+            </div>
+            <div class="data-input">
+                <h3>📈 Adicionar Ação</h3>
+                <div class="input-group">
+                    <div class="input-field"><label>Ticker (Ex: PETR4)</label><input type="text" id="acaoTicker" placeholder="PETR4" style="text-transform:uppercase"></div>
+                    <div class="input-field"><label>Quantidade</label><input type="number" id="acaoQtd" placeholder="100" min="1" inputmode="numeric"></div>
+                    <div class="input-field"><label>Preço Médio (R$)</label><input type="number" id="acaoPrecoMedio" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+                    <div class="input-field"><label>Preço Atual (R$)</label><input type="number" id="acaoPrecoAtual" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+                    <div class="input-field"><label>Dividendo Mensal/Ação (R$)</label><input type="number" id="acaoDividendos" placeholder="0,05" step="0.01" inputmode="decimal"></div>
+                    <div class="input-field"><label>Dividend Yield Anual (%)</label><input type="number" id="acaoDividendYield" placeholder="6,5" step="0.01" inputmode="decimal"></div>
+                </div>
+                <p class="info-text">💡 Ex: R$ 0,05 por ação/mês com 100 ações = R$ 5,00/mês</p>
+                <button class="btn" id="btnAddAcao">➕ Adicionar Ação</button>
+            </div>
+            <div class="data-input">
+                <h3>📊 Carteira de Ações</h3>
+                <p class="info-text">💡 Clique em "Editar" para atualizar preços ou dividendos</p>
+                <div id="listaAcoes"><p class="empty-state">Nenhuma ação na carteira</p></div>
+            </div>
+            <div class="charts-container">
+                <div class="chart-card"><h3>💼 Distribuição da Carteira</h3><div class="chart-wrapper"><canvas id="btgCarteiraChart"></canvas></div></div>
+                <div class="chart-card"><h3>📈 Rentabilidade por Ação</h3><div class="chart-wrapper"><canvas id="btgRentabilidadeChart"></canvas></div></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let dados = {
+            meses: ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],
+            receitas: [0,0,0,0,0,0,0,0,0,0,0,0],
+            despesas: [0,0,0,0,0,0,0,0,0,0,0,0],
+            categorias: {'Alimentação':0,'Padaria':0,'Mercado':0,'Transporte':0,'Moradia':0,'Saúde':0,'Lazer':0,'Vestuário':0,'Outros':0},
+            itau: {saldo:0,gastoDebito:0,categorias:{},limiteCartao:0,parcelas:[],gastosFixos:[]},
+            btg: {acoes:[],dividendosAcumulados:0,mesInicioAcumulacao:1},
+            historicoGastosTodos: [],
+            cofrinhos: {cdiAnual:10.65,itau:{principal:0,percCDI:100,dataInicio:null,total:0,rendeu:0},btg:{principal:0,percCDI:100,dataInicio:null,total:0,rendeu:0}}
+        };
+        let charts = {}, bancoAtual = 'todos';
+
+        function initEventListeners() {
+            document.querySelectorAll('.bank-btn').forEach(btn => {
+                btn.addEventListener('click', function() { mudarBanco(this.dataset.banco); });
+            });
+            document.getElementById('monthSelect').addEventListener('change', updateDashboard);
+
+            const buttons = [
+                {id:'btnAddReceita',fn:adicionarReceita},{id:'btnAddGasto',fn:adicionarGasto},
+                {id:'btnAtualizarSaldo',fn:atualizarSaldoItau},{id:'btnAddGastoItau',fn:adicionarGastoItau},
+                {id:'btnAddAcao',fn:adicionarAcao},{id:'btnSalvarLimiteItau',fn:salvarLimiteItau},
+                {id:'btnAddParcelaItau',fn:adicionarParcelaItau},{id:'btnAddGastoFixoItau',fn:adicionarGastoFixoItau}
+            ];
+            buttons.forEach(({id,fn}) => {
+                const btn = document.getElementById(id);
+                if(btn) btn.addEventListener('click', async function() {
+                    this.classList.add('loading'); try{await fn();}finally{this.classList.remove('loading');}
+                });
+            });
+            ['itau','btg'].forEach(b => {
+                ['principal','perc','inicio'].forEach(field => {
+                    const el = document.getElementById(`cof_${b}_${field}`);
+                    if(el) el.addEventListener('change', () => salvarCofrinhoBanco(b));
+                });
+            });
+        }
+
+        function salvarLimiteItau() {
+            const limite = parseFloat(document.getElementById('itauLimiteCartao').value);
+            if(!limite || limite<0){alert('Insira um valor válido!');return;}
+            dados.itau.limiteCartao = limite;
+            document.getElementById('itauLimiteCartao').value = '';
+            salvarDados(); updateItauView(); alert('✅ Limite salvo!');
+        }
+
+        function adicionarParcelaItau() {
+            const desc = document.getElementById('itauParcelaDescricao').value;
+            const valor = parseFloat(document.getElementById('itauParcelaValor').value);
+            const num = parseInt(document.getElementById('itauParcelaNumero').value);
+            const mes = parseInt(document.getElementById('itauParcelaMes').value);
+            if(!desc || !valor || !num || valor<=0 || num<=0){alert('Preencha todos os campos!');return;}
+            dados.itau.parcelas.push({id:Date.now(),descricao:desc,valorParcela:valor,numParcelas:num,mesInicio:mes,total:valor*num,parcelasPagas:0});
+            document.getElementById('itauParcelaDescricao').value = '';
+            document.getElementById('itauParcelaValor').value = '';
+            document.getElementById('itauParcelaNumero').value = '';
+            salvarDados(); updateItauView(); alert(`✅ Parcela adicionada! Total: R$ ${(valor*num).toFixed(2)}`);
+        }
+
+        function renderParcelasItau() {
+            const container = document.getElementById('listaParcelasItau');
+            const mesAtual = parseInt(document.getElementById('monthSelect').value);
+            if(dados.itau.parcelas.length===0){container.innerHTML='<p class="empty-state">Nenhuma parcela ativa</p>';return;}
+            const ordenadas = [...dados.itau.parcelas].sort((a,b)=>b.valorParcela-a.valorParcela);
+            container.innerHTML = ordenadas.map(p => {
+                const restantes = p.numParcelas - p.parcelasPagas;
+                const valorRestante = restantes * p.valorParcela;
+                const ehAtual = mesAtual>=p.mesInicio && mesAtual<(p.mesInicio+p.numParcelas);
+                return `<div class="parcela-item" style="${ehAtual?'border-left-color:#f59e0b;background:#fffbeb;':''}"><div class="parcela-info"><div class="parcela-titulo">${p.descricao}</div><div class="parcela-detalhes">📅 ${p.numParcelas}x de R$ ${p.valorParcela.toFixed(2)} = Total R$ ${p.total.toFixed(2)}<br>💳 Restam ${restantes} parcelas (R$ ${valorRestante.toFixed(2)})</div></div><div class="parcela-valor">R$ ${p.valorParcela.toFixed(2)}/mês</div><div class="parcela-actions"><button class="btn btn-secondary" onclick="editarParcelaItau(${p.id})" style="padding:8px 16px;font-size:13px;background:linear-gradient(135deg,#3b82f6,#2563eb)">✏️ Editar</button><button class="btn btn-danger" onclick="removerParcelaItau(${p.id})" style="padding:8px 16px;font-size:13px">🗑️ Remover</button></div></div>`;
+            }).join('');
+        }
+
+        function editarParcelaItau(id) {
+            const p = dados.itau.parcelas.find(x=>x.id===id); if(!p)return;
+            const novaDesc = prompt('Descrição:',p.descricao); if(novaDesc===null)return;
+            const novoValor = prompt('Valor da parcela (R$):',p.valorParcela); if(novoValor===null)return;
+            const valorNum = parseFloat(novoValor); if(isNaN(valorNum)||valorNum<=0){alert('Valor inválido!');return;}
+            p.descricao = novaDesc; p.valorParcela = valorNum; p.total = valorNum * p.numParcelas;
+            salvarDados(); updateItauView(); alert('✅ Parcela atualizada!');
+        }
+
+        function removerParcelaItau(id) {
+            if(!confirm('Deseja remover esta compra?'))return;
+            dados.itau.parcelas = dados.itau.parcelas.filter(p=>p.id!==id);
+            salvarDados(); updateItauView(); alert('✅ Compra removida!');
+        }
+
+        function calcularGastosCartaoItau() {
+            const mesAtual = parseInt(document.getElementById('monthSelect').value);
+            if(isNaN(mesAtual))return{mes:0,ano:0};
+            let gastoMes=0,gastoAno=0;
+            dados.itau.parcelas.forEach(p=>{
+                const parcelasRestantes = p.numParcelas - p.parcelasPagas;
+                gastoAno += parcelasRestantes * p.valorParcela;
+                if(mesAtual>=p.mesInicio && mesAtual<=(p.mesInicio+p.numParcelas-1))gastoMes+=p.valorParcela;
+            });
+            return{mes:gastoMes,ano:gastoAno};
+        }
+
+        // GASTOS FIXOS MENSAIS
+        function adicionarGastoFixoItau() {
+            const descricao = document.getElementById('itauGastoFixoDescricao').value;
+            const valor = parseFloat(document.getElementById('itauGastoFixoValor').value);
+            if(!descricao || !valor || valor<=0){alert('Preencha todos os campos!');return;}
+            dados.itau.gastosFixos.push({id:Date.now(),descricao:descricao,valor:valor});
+            document.getElementById('itauGastoFixoDescricao').value = '';
+            document.getElementById('itauGastoFixoValor').value = '';
+            salvarDados(); updateItauView(); alert('✅ Gasto fixo adicionado!');
+        }
+
+        function renderGastosFixosItau() {
+            const container = document.getElementById('listaGastosFixosItau');
+            if(dados.itau.gastosFixos.length===0){container.innerHTML='<p class="empty-state">Nenhum gasto fixo cadastrado</p>';return;}
+            const total = dados.itau.gastosFixos.reduce((sum,g)=>sum+g.valor,0);
+            container.innerHTML = dados.itau.gastosFixos.map(g=>`
+                <div class="parcela-item"><div class="parcela-info"><div class="parcela-titulo">${g.descricao}</div><div class="parcela-detalhes">🔄 Mensal</div></div><div class="parcela-valor">R$ ${g.valor.toFixed(2)}</div><div class="parcela-actions"><button class="btn btn-secondary" onclick="editarGastoFixoItau(${g.id})" style="padding:8px 16px;font-size:13px;background:linear-gradient(135deg,#3b82f6,#2563eb)">✏️ Editar</button><button class="btn btn-danger" onclick="removerGastoFixoItau(${g.id})" style="padding:8px 16px;font-size:13px">🗑️ Remover</button></div></div>
+            `).join('') + `<div class="total-box">Total Mensal: <span style="color:#ef4444;font-size:1.2em">R$ ${total.toFixed(2)}</span></div>`;
+        }
+
+        function editarGastoFixoItau(id) {
+            const g = dados.itau.gastosFixos.find(x=>x.id===id); if(!g)return;
+            const novaDesc = prompt('Descrição:',g.descricao); if(novaDesc===null)return;
+            const novoValor = prompt('Valor (R$):',g.valor); if(novoValor===null)return;
+            const valorNum = parseFloat(novoValor); if(isNaN(valorNum)||valorNum<=0){alert('Valor inválido!');return;}
+            g.descricao = novaDesc; g.valor = valorNum;
+            salvarDados(); updateItauView(); alert('✅ Gasto fixo atualizado!');
+        }
+
+        function removerGastoFixoItau(id) {
+            if(!confirm('Deseja remover este gasto fixo?'))return;
+            dados.itau.gastosFixos = dados.itau.gastosFixos.filter(g=>g.id!==id);
+            salvarDados(); updateItauView(); alert('✅ Gasto fixo removido!');
+        }
+
+        function salvarCofrinhoBanco(banco) {
+            const principal = parseFloat(document.getElementById(`cof_${banco}_principal`).value)||0;
+            const percCDI = parseFloat(document.getElementById(`cof_${banco}_perc`).value)||100;
+            const dataInicio = document.getElementById(`cof_${banco}_inicio`).value;
+            dados.cofrinhos[banco] = {principal,percCDI,dataInicio,total:0,rendeu:0};
+            calcularCofrinho(banco); salvarDados(); updateResumoCofrinhos();
+        }
+
+        function calcularCofrinho(banco) {
+            const cof = dados.cofrinhos[banco];
+            if(!cof.dataInicio||cof.principal<=0){
+                document.getElementById(`cof_${banco}_rendeu`).textContent='R$ 0,00';
+                document.getElementById(`cof_${banco}_total`).textContent='R$ 0,00';return;
+            }
+            const taxaDiaria = Math.pow(1+dados.cofrinhos.cdiAnual/100,1/252)-1;
+            const taxaEfetiva = taxaDiaria*(cof.percCDI/100);
+            const hoje = new Date(), inicio = new Date(cof.dataInicio);
+            const dias = Math.ceil((hoje-inicio)/(1000*60*60*24));
+            cof.total = cof.principal*Math.pow(1+taxaEfetiva,dias);
+            cof.rendeu = cof.total-cof.principal;
+            document.getElementById(`cof_${banco}_rendeu`).textContent=`R$ ${cof.rendeu.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById(`cof_${banco}_total`).textContent=`R$ ${cof.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+        }
+
+        function updateResumoCofrinhos() {
+            ['itau','btg'].forEach(b=>calcularCofrinho(b));
+            let totalPrincipal=0,totalRendeu=0,totalGeral=0;
+            ['itau','btg'].forEach(banco=>{
+                const cof=dados.cofrinhos[banco];
+                document.getElementById(`resumo-${banco}-principal`).textContent=`R$ ${cof.principal.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+                document.getElementById(`resumo-${banco}-rendeu`).textContent=`R$ ${cof.rendeu.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+                document.getElementById(`resumo-${banco}-total`).textContent=`R$ ${cof.total.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+                totalPrincipal+=cof.principal;totalRendeu+=cof.rendeu;totalGeral+=cof.total;
+            });
+            document.getElementById('resumo-total-principal').textContent=`R$ ${totalPrincipal.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('resumo-total-rendeu').textContent=`R$ ${totalRendeu.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('resumo-total-geral').textContent=`R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('todos-cofrinhos').textContent=`R$ ${totalGeral.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+        }
+
+        function mudarBanco(banco) {
+            bancoAtual=banco;
+            document.querySelectorAll('.bank-btn').forEach(btn=>btn.classList.remove('active'));
+            document.querySelector(`.bank-btn.${banco}`).classList.add('active');
+            document.querySelectorAll('.view-content').forEach(view=>view.classList.remove('active'));
+            document.getElementById(`view-${banco}`).classList.add('active');
+            document.body.className=`banco-${banco}`;
+            updateDashboard();
+        }
+
+        function initCharts() {
+            charts.categorias = new Chart(document.getElementById('categoriasChart'),{type:'pie',data:{labels:Object.keys(dados.categorias),datasets:[{data:Object.values(dados.categorias),backgroundColor:['#ef4444','#f59e0b','#10b981','#3b82f6','#8b5cf6','#ec4899','#6366f1','#14b8a6','#a855f7']}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});
+            charts.bancos = new Chart(document.getElementById('bancosChart'),{type:'doughnut',data:{labels:['Itaú'],datasets:[{data:[dados.itau.gastoDebito],backgroundColor:['#ff8c00']}]},options:{responsive:true,maintainAspectRatio:false}});
+            charts.evolucao = new Chart(document.getElementById('evolucaoChart'),{type:'bar',data:{labels:dados.meses,datasets:[{label:'Receitas',data:dados.receitas,backgroundColor:'#10b981'},{label:'Despesas',data:dados.despesas,backgroundColor:'#ef4444'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}});
+            charts.itauCategorias = new Chart(document.getElementById('itauCategoriasChart'),{type:'pie',data:{labels:[],datasets:[{data:[],backgroundColor:['#ef4444','#f59e0b','#10b981','#3b82f4','#8b5cf6']}]},options:{responsive:true,maintainAspectRatio:false}});
+            charts.btgCarteira = new Chart(document.getElementById('btgCarteiraChart'),{type:'pie',data:{labels:[],datasets:[{data:[],backgroundColor:['#10b981','#3b82f6','#f59e0b','#ef4444','#8b5cf6']}]},options:{responsive:true,maintainAspectRatio:false}});
+            charts.btgRentabilidade = new Chart(document.getElementById('btgRentabilidadeChart'),{type:'bar',data:{labels:[],datasets:[{label:'Rentabilidade %',data:[],backgroundColor:'#10b981'}]},options:{responsive:true,maintainAspectRatio:false}});
+        }
+
+        function updateDashboard() {
+            const mesIndex = document.getElementById('monthSelect').value;
+            if(mesIndex!=='ano')calcularDividendosAcumulados();
+            if(bancoAtual==='todos')updateTodosView(mesIndex);
+            else if(bancoAtual==='itau')updateItauView();
+            else if(bancoAtual==='btg')updateBTGView();
+        }
+
+        function updateTodosView(mesIndex) {
+            const isAno = mesIndex==='ano', idx=isAno?0:parseInt(mesIndex);
+            const receita=isAno?dados.receitas.reduce((a,b)=>a+b,0):dados.receitas[idx];
+            const despesa=isAno?dados.despesas.reduce((a,b)=>a+b,0):dados.despesas[idx];
+            const economia=receita-despesa;
+            const percEconomia=receita>0?((economia/receita)*100).toFixed(1):0;
+            document.getElementById('todos-receitas').textContent=`R$ ${receita.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('todos-despesas').textContent=`R$ ${despesa.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('todos-economia').textContent=`R$ ${economia.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('todos-perc').textContent=`${percEconomia}%`;
+            const economiaEl=document.getElementById('todos-economia'), percEl=document.getElementById('todos-perc');
+            if(economia>=0){economiaEl.className='card-value card-positive';percEl.className='card-value card-positive';}
+            else{economiaEl.className='card-value card-negative';percEl.className='card-value card-negative';}
+            const patrimonioAcoes=calcularPatrimonioBTG();
+            const patrimonioCofrinhos=dados.cofrinhos.itau.total+dados.cofrinhos.btg.total;
+            document.getElementById('todos-patrimonio').textContent=`R$ ${(patrimonioAcoes+patrimonioCofrinhos).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            updateResumoCofrinhos();
+            charts.categorias.data.datasets[0].data=Object.values(dados.categorias);charts.categorias.update();
+            charts.bancos.data.datasets[0].data=[dados.itau.gastoDebito];charts.bancos.update();
+            charts.evolucao.data.datasets[0].data=dados.receitas;charts.evolucao.data.datasets[1].data=dados.despesas;charts.evolucao.update();
+            renderHistoricoGastosTodos();
+        }
+
+        function updateItauView() {
+            const gastosCartao=calcularGastosCartaoItau(), limite=dados.itau.limiteCartao;
+            const totalGastosFixos = dados.itau.gastosFixos.reduce((sum,g)=>sum+g.valor,0);
+            document.getElementById('itau-limite-total').textContent=`R$ ${limite.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('itau-gasto-mes').textContent=`R$ ${gastosCartao.mes.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('itau-gastos-fixos-total').textContent=`R$ ${totalGastosFixos.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('itau-limite-disponivel').textContent=`R$ ${(limite-gastosCartao.mes).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('itau-divida-total').textContent=`R$ ${gastosCartao.ano.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            const saldo=dados.itau.saldo, gastoDebito=dados.itau.gastoDebito;
+            document.getElementById('itau-saldo').textContent=`R$ ${saldo.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('itau-gasto-debito').textContent=`R$ ${gastoDebito.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('itau-disponivel').textContent=`R$ ${(saldo-gastoDebito).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            renderParcelasItau();renderGastosFixosItau();
+            if(Object.keys(dados.itau.categorias).length>0){
+                charts.itauCategorias.data.labels=Object.keys(dados.itau.categorias);
+                charts.itauCategorias.data.datasets[0].data=Object.values(dados.itau.categorias);charts.itauCategorias.update();
+            }
+            calcularCofrinho('itau');
+        }
+
+        function updateBTGView() {
+            const patrimonio=calcularPatrimonioBTG(), rendimento=calcularRendimentoBTG();
+            const investidoTotal=dados.btg.acoes.reduce((t,a)=>t+(a.quantidade*a.precoMedio),0);
+            const rentabilidade=investidoTotal>0?((rendimento/investidoTotal)*100).toFixed(2):0;
+            const dividendosMes=calcularDividendosMes();
+            document.getElementById('btg-patrimonio').textContent=`R$ ${patrimonio.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            const rendEl=document.getElementById('btg-rendimento');rendEl.textContent=`R$ ${rendimento.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;rendEl.className=rendimento>=0?'card-value card-positive':'card-value card-negative';
+            const rentEl=document.getElementById('btg-rentabilidade');rentEl.textContent=`${rentabilidade}%`;rentEl.className=rentabilidade>=0?'card-value card-positive':'card-value card-negative';
+            document.getElementById('btg-dividendos-acumulados').textContent=`R$ ${dados.btg.dividendosAcumulados.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('btg-dividendos-mes').textContent=`R$ ${dividendosMes.toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            document.getElementById('btg-patrimonio-total-dividendos').textContent=`R$ ${(patrimonio+dados.btg.dividendosAcumulados).toLocaleString('pt-BR',{minimumFractionDigits:2})}`;
+            renderAcoes();
+            if(dados.btg.acoes.length>0){
+                charts.btgCarteira.data.labels=dados.btg.acoes.map(a=>a.ticker);
+                charts.btgCarteira.data.datasets[0].data=dados.btg.acoes.map(a=>a.quantidade*a.precoAtual);charts.btgCarteira.update();
+                charts.btgRentabilidade.data.labels=dados.btg.acoes.map(a=>a.ticker);
+                charts.btgRentabilidade.data.datasets[0].data=dados.btg.acoes.map(a=>{const l=(a.precoAtual-a.precoMedio)*a.quantidade;const i=a.precoMedio*a.quantidade;return i>0?((l/i)*100).toFixed(2):0;});
+                charts.btgRentabilidade.update();
+            }
+            calcularCofrinho('btg');
+        }
+
+        function calcularPatrimonioBTG(){return dados.btg.acoes.reduce((t,a)=>t+(a.quantidade*a.precoAtual),0);}
+        function calcularRendimentoBTG(){return dados.btg.acoes.reduce((t,a)=>{const l=(a.precoAtual-a.precoMedio)*a.quantidade;return t+l;},0);}
+        function calcularDividendosMes(){return dados.btg.acoes.reduce((t,a)=>t+(a.dividendosMensal*a.quantidade),0);}
+        function calcularDividendosAcumulados(){
+            const mesAtual=parseInt(document.getElementById('monthSelect').value);if(isNaN(mesAtual))return;
+            dados.btg.dividendosAcumulados=0;
+            dados.btg.acoes.forEach(a=>{const mc=a.mesCompra||dados.btg.mesInicioAcumulacao;const md=mesAtual-mc;if(md>0)dados.btg.dividendosAcumulados+=(a.dividendosMensal*a.quantidade)*md;});
+        }
+
+        function adicionarReceita(){
+            const valor=parseFloat(document.getElementById('valorReceita').value);
+            const mesIndex=parseInt(document.getElementById('monthSelect').value);
+            if(!valor||valor<=0||isNaN(mesIndex)){alert('Selecione um mês e insira um valor válido!');return;}
+            dados.receitas[mesIndex]+=valor;document.getElementById('valorReceita').value='';salvarDados();updateDashboard();alert('✅ Receita adicionada!');
+        }
+
+        function adicionarGasto(){
+            const categoria=document.getElementById('categoria').value;
+            const valor=parseFloat(document.getElementById('valor').value);
+            const cartao=document.getElementById('cartao').value;
+            const mesIndex=parseInt(document.getElementById('monthSelect').value);
+            if(!valor||valor<=0||isNaN(mesIndex)){alert('Selecione um mês e insira um valor válido!');return;}
+            dados.categorias[categoria]=(dados.categorias[categoria]||0)+valor;
+            dados.despesas[mesIndex]+=valor;
+            dados.itau.gastoDebito+=valor;
+            dados.itau.categorias[categoria]=(dados.itau.categorias[categoria]||0)+valor;
+            dados.historicoGastosTodos.push({categoria,valor,cartao,mes:mesIndex,timestamp:Date.now()});
+            document.getElementById('valor').value='';salvarDados();updateDashboard();alert('✅ Gasto adicionado!');
+        }
+
+        function renderHistoricoGastosTodos(){
+            const container=document.getElementById('historicoGastos');
+            if(dados.historicoGastosTodos.length===0){container.innerHTML='<p class="empty-state">Nenhum gasto registrado ainda</p>';return;}
+            container.innerHTML=dados.historicoGastosTodos.map((g,i)=>{
+                const mesNome=dados.meses[g.mes];
+                return `<div class="parcela-item"><div class="parcela-info"><div class="parcela-titulo">${g.categoria}</div><div class="parcela-detalhes">📅 ${mesNome} 2026 • ${g.cartao}</div></div><div class="parcela-valor">R$ ${g.valor.toFixed(2)}</div><div class="parcela-actions"><button class="btn btn-secondary" onclick="editarGasto(${i})" style="padding:8px 16px;font-size:13px;background:linear-gradient(135deg,#3b82f6,#2563eb)">✏️ Editar</button><button class="btn btn-danger" onclick="removerGasto(${i})" style="padding:8px 16px;font-size:13px">🗑️</button></div></div>`;
+            }).join('');
+        }
+
+        function editarGasto(index){
+            const g=dados.historicoGastosTodos[index];
+            const novaCat=prompt('Categoria:',g.categoria);if(novaCat===null)return;
+            const novoVal=prompt('Valor (R$):',g.valor);if(novoVal===null)return;
+            const valNum=parseFloat(novoVal);if(isNaN(valNum)||valNum<=0){alert('Valor inválido!');return;}
+            dados.categorias[g.categoria]-=g.valor;dados.despesas[g.mes]-=g.valor;dados.itau.gastoDebito-=g.valor;dados.itau.categorias[g.categoria]=(dados.itau.categorias[g.categoria]||0)-g.valor;
+            g.categoria=novaCat;g.valor=valNum;
+            dados.categorias[g.categoria]=(dados.categorias[g.categoria]||0)+valNum;dados.despesas[g.mes]+=valNum;dados.itau.gastoDebito+=valNum;dados.itau.categorias[g.categoria]=(dados.itau.categorias[g.categoria]||0)+valNum;
+            salvarDados();updateDashboard();alert('✅ Gasto editado!');
+        }
+
+        function removerGasto(index){
+            if(!confirm('Deseja remover este gasto?'))return;
+            const g=dados.historicoGastosTodos[index];
+            dados.categorias[g.categoria]-=g.valor;dados.despesas[g.mes]-=g.valor;dados.itau.gastoDebito-=g.valor;dados.itau.categorias[g.categoria]=(dados.itau.categorias[g.categoria]||0)-g.valor;
+            if(dados.categorias[g.categoria]<0)dados.categorias[g.categoria]=0;
+            if(dados.despesas[g.mes]<0)dados.despesas[g.mes]=0;
+            if(dados.itau.gastoDebito<0)dados.itau.gastoDebito=0;
+            dados.historicoGastosTodos.splice(index,1);salvarDados();updateDashboard();alert('✅ Gasto removido!');
+        }
+
+        function atualizarSaldoItau(){
+            const saldo=parseFloat(document.getElementById('itauSaldo').value);
+            if(!saldo||saldo<0){alert('Insira um valor válido!');return;}
+            dados.itau.saldo=saldo;document.getElementById('itauSaldo').value='';salvarDados();updateDashboard();alert('✅ Saldo atualizado!');
+        }
+
+        function adicionarGastoItau(){
+            const categoria=document.getElementById('itauCategoria').value;
+            const valor=parseFloat(document.getElementById('itauValor').value);
+            const mesIndex=parseInt(document.getElementById('monthSelect').value);
+            if(!valor||valor<=0||isNaN(mesIndex)){alert('Selecione um mês e insira um valor válido!');return;}
+            dados.itau.gastoDebito+=valor;dados.itau.categorias[categoria]=(dados.itau.categorias[categoria]||0)+valor;
+            dados.despesas[mesIndex]+=valor;dados.categorias[categoria]=(dados.categorias[categoria]||0)+valor;
+            document.getElementById('itauValor').value='';salvarDados();updateDashboard();alert('✅ Gasto adicionado!');
+        }
+
+        function adicionarAcao(){
+            const ticker=document.getElementById('acaoTicker').value.toUpperCase();
+            const qtd=parseInt(document.getElementById('acaoQtd').value);
+            const precoMedio=parseFloat(document.getElementById('acaoPrecoMedio').value);
+            const precoAtual=parseFloat(document.getElementById('acaoPrecoAtual').value);
+            const dividendosMensal=parseFloat(document.getElementById('acaoDividendos').value);
+            const dividendYield=parseFloat(document.getElementById('acaoDividendYield').value);
+            if(!ticker||!qtd||!precoMedio||!precoAtual){alert('Preencha todos os campos obrigatórios!');return;}
+            dados.btg.acoes.push({ticker,quantidade:qtd,precoMedio,precoAtual,dividendosMensal:dividendosMensal||0,dividendYield:dividendYield||0,mesCompra:parseInt(document.getElementById('monthSelect').value)});
+            document.getElementById('acaoTicker').value='';document.getElementById('acaoQtd').value='';document.getElementById('acaoPrecoMedio').value='';document.getElementById('acaoPrecoAtual').value='';document.getElementById('acaoDividendos').value='';document.getElementById('acaoDividendYield').value='';
+            calcularDividendosAcumulados();salvarDados();updateDashboard();alert('✅ Ação adicionada!');
+        }
+
+        function renderAcoes(){
+            const container=document.getElementById('listaAcoes');
+            const mesAtual=parseInt(document.getElementById('monthSelect').value);
+            if(dados.btg.acoes.length===0){container.innerHTML='<p class="empty-state">Nenhuma ação na carteira</p>';return;}
+            container.innerHTML=dados.btg.acoes.map((a,i)=>{
+                const investido=a.quantidade*a.precoMedio;
+                const atual=a.quantidade*a.precoAtual;
+                const lucro=atual-investido;
+                const rentabilidade=((lucro/investido)*100).toFixed(2);
+                const classe=lucro>=0?'acao-lucro':'acao-prejuizo';
+                const divMensal=(a.dividendosMensal||0)*a.quantidade;
+                const mc=a.mesCompra||dados.btg.mesInicioAcumulacao;
+                const md=mesAtual!=='ano'&&mesAtual>=mc?mesAtual-mc:0;
+                const divAcum=divMensal*md;
+                const dyReal=investido>0?(((divMensal*12)/investido)*100).toFixed(2):0;
+                return `<div class="acao-item"><div class="acao-header"><div class="acao-ticker">${a.ticker}</div><div class="${classe}">${lucro>=0?'+':''}R$ ${lucro.toFixed(2)} (${rentabilidade}%)</div></div><div class="acao-detalhes"><div><strong>Qtd:</strong> ${a.quantidade}</div><div><strong>PM:</strong> R$ ${a.precoMedio.toFixed(2)}</div><div><strong>Atual:</strong> R$ ${a.precoAtual.toFixed(2)}</div><div><strong>Investido:</strong> R$ ${investido.toFixed(2)}</div><div><strong>Posição:</strong> R$ ${atual.toFixed(2)}</div><div><strong>Divid/mês:</strong> R$ ${divMensal.toFixed(2)}</div><div><strong>DY Real:</strong> ${dyReal}%</div><div style="grid-column:1/-1"><strong>💰 Dividendos Acumulados:</strong> <span style="color:#10b981;font-weight:bold">R$ ${divAcum.toFixed(2)}</span></div></div><div style="display:flex;gap:10px;margin-top:15px"><button class="btn btn-secondary" onclick="editarAcao(${i})" style="flex:1;padding:10px;font-size:14px;background:linear-gradient(135deg,#3b82f6,#2563eb)">✏️ Editar</button><button class="btn btn-danger" onclick="removerAcao(${i})" style="flex:1;padding:10px;font-size:14px">🗑️ Remover</button></div></div>`;
+            }).join('');
+        }
+
+        function editarAcao(index){
+            const a=dados.btg.acoes[index];
+            const novoPreco=prompt('Preço Atual (R$):',a.precoAtual);if(novoPreco===null)return;
+            const novoDiv=prompt('Dividendo Mensal/Ação (R$):',a.dividendosMensal||0);if(novoDiv===null)return;
+            const novoDY=prompt('Dividend Yield Anual (%):',a.dividendYield||0);if(novoDY===null)return;
+            const pn=parseFloat(novoPreco),dn=parseFloat(novoDiv),dyn=parseFloat(novoDY);
+            if(isNaN(pn)||pn<=0||isNaN(dn)||dn<0||isNaN(dyn)||dyn<0){alert('Valores inválidos!');return;}
+            a.precoAtual=pn;a.dividendosMensal=dn;a.dividendYield=dyn;
+            calcularDividendosAcumulados();salvarDados();updateDashboard();alert('✅ Ação atualizada!');
+        }
+
+        function removerAcao(index){if(confirm('Deseja remover esta ação?')){dados.btg.acoes.splice(index,1);salvarDados();updateDashboard();}}
+        function salvarDados(){localStorage.setItem('controleFinanceiroV2',JSON.stringify(dados));}
+        function carregarDados(){
+            const s=localStorage.getItem('controleFinanceiroV2');
+            if(s){dados=JSON.parse(s);if(!dados.itau.parcelas)dados.itau.parcelas=[];if(!dados.itau.gastosFixos)dados.itau.gastosFixos=[];if(!dados.itau.limiteCartao)dados.itau.limiteCartao=0;if(!dados.itau.gastoDebito)dados.itau.gastoDebito=dados.itau.gasto||0;}
+        }
+        function aplicarDadosNosInputs(){
+            ['itau','btg'].forEach(b=>{
+                const cof=dados.cofrinhos[b];
+                if(document.getElementById(`cof_${b}_principal`)){
+                    document.getElementById(`cof_${b}_principal`).value=cof.principal||'';
+                    document.getElementById(`cof_${b}_perc`).value=cof.percCDI||100;
+                    document.getElementById(`cof_${b}_inicio`).value=cof.dataInicio||'';
+                }
+            });
+        }
+        window.onload=function(){carregarDados();initCharts();initEventListeners();aplicarDadosNosInputs();updateDashboard();};
+    </script>
+</body>
+</html>
